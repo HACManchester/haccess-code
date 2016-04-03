@@ -306,7 +306,7 @@ static bool config_wdt = true;
 static void process_wdt(void)
 {
   if (!config_wdt)
-    return false;
+    return;
 
   Wire.beginTransmission(WDT_ADDR);
   Wire.write(0x29);
@@ -317,18 +317,24 @@ void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
 
-#if defined(PN_IIC) || defined(NFC_ELECHOUSE)
-  // ensure the pins for spi are not configured
+  // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
   pinMode(12, INPUT);
   pinMode(13, OUTPUT);
   pinMode(16, OUTPUT);
-#endif
+
+  // set the pins
+  digitalWrite(15, 0);
+  digitalWrite(14, 0);
+  digitalWrite(16, 0);
 
   // show the chip and sdk version
   show_ids();
   setup_gpioexp();
   process_wdt();
+
+  gpio_exp_setgpio(5, 0); // set the display nCS=0
+  gpio_exp_setgpio(4, 1); // set the display nReset=1
 
   gpio_exp_setgpio(6, 1);
   setupDisplay();
