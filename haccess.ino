@@ -298,6 +298,21 @@ static void open_config_file(void)
   cfgfile.setFile(cfg);
 }
 
+static bool config_wdt = true;
+
+#define WDT_ADDR  (0x50)
+
+// pet the external watchdog (if it exists)
+static void process_wdt(void)
+{
+  if (!config_wdt)
+    return false;
+
+  Wire.beginTransmission(WDT_ADDR);
+  Wire.write(0x29);
+  Wire.endTransmission();
+}
+
 void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
@@ -313,6 +328,7 @@ void setup() {
   // show the chip and sdk version
   show_ids();
   setup_gpioexp();
+  process_wdt();
 
   gpio_exp_setgpio(6, 1);
   setupDisplay();
@@ -325,14 +341,16 @@ void setup() {
   }
 
   open_config_file();
+  process_wdt();
 
   read_wifi_config();
   start_wifi();
+
   setup_mqtt();
   init_nfc();
 
   check_card_list();
-
+  process_wdt();
 
 #if defined(PN_IIC) || defined(NFC_ELECHOUSE)
   Serial.println("PN532 is IIC connected");
@@ -595,16 +613,6 @@ static void processMqtt(void)
     }
     mqtt.loop();
   }
-}
-
-#define WDT_ADDR  (0x50)
-
-// pet the external watchdog (if it exists)
-static void process_wdt(void)
-{
-  Wire.beginTransmission(WDT_ADDR);
-  Wire.write(0x29);
-  Wire.endTransmission();
 }
 
 // main code loop
