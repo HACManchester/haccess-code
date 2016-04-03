@@ -264,7 +264,7 @@ static void setup_mqtt(void)
   uint16_t port;
 
   if (cfgfile.getValue("mqtt", "Server", servname, sizeof(servname))) {
-    // that;s ok
+    // that's ok
     Serial.println(servname);
   } else {
     Serial.println("default mqtt server");
@@ -283,7 +283,6 @@ static void setup_mqtt(void)
   mqtt_server = strdup(servname);
   mqtt.setServer(mqtt_server, port);
   mqtt.setCallback(mqtt_callback);
-
 }
 
 static void open_config_file(void)
@@ -300,10 +299,8 @@ static void open_config_file(void)
 }
 
 void setup() {
-  //Wire.begin(5, 4);   // think may be wrong way around
   Wire.begin(4, 5);
   Serial.begin(115200);
-  //delay(5);
 
 #if defined(PN_IIC) || defined(NFC_ELECHOUSE)
   // ensure the pins for spi are not configured
@@ -313,16 +310,11 @@ void setup() {
   pinMode(16, OUTPUT);
 #endif
 
-  // for new device, we need to set 15 high to unreset
-  Serial.println("new style device -> unreset gpio");
-  pinMode(15, OUTPUT);
-  digitalWrite(15, HIGH);
-
   // show the chip and sdk version
   show_ids();
   setup_gpioexp();
-  gpio_exp_setgpio(6, 1);
 
+  gpio_exp_setgpio(6, 1);
   setupDisplay();
 
   Serial.println("MAC " + WiFi.macAddress());
@@ -341,10 +333,6 @@ void setup() {
 
   check_card_list();
 
-  //Serial.println("Awiaitng wifi connection");
-  while (WiFi.status() != WL_CONNECTED && false) {
-    delay(50);
-  }
 
 #if defined(PN_IIC) || defined(NFC_ELECHOUSE)
   Serial.println("PN532 is IIC connected");
@@ -482,13 +470,6 @@ static void serial_interaction(void)
 
     case 'B':
       gpio_exp_setgpio(6, 1);
-      break;
-
-    case 'd':
-    case 'D':
-      Serial.println("Initialising display");
-      PCD8544_init(&pcd8544_settings);
-      Serial.println("Initialised display");
       break;
 
     case 'p':
@@ -664,4 +645,3 @@ void loop() {
     serial_interaction();
   }
 }
-
