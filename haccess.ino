@@ -4,16 +4,6 @@
 #include <ESP8266WiFi.h>
 #include "FS.h"
 
-// gpio expander:
-// gp0 = in_r
-// gp1 = in_g
-// gp2 = in_opto
-// gp3 = 532_irq
-// gp4 = out_reset_periph
-// gp5 = out_lcd_dc
-// gp6 = out_lcd_bl
-// gp7 = out_opto
-
 // for nfc library
 #include <Wire.h>
 #include <SPI.h>
@@ -124,6 +114,10 @@ void setup_gpioexp(void)
   Wire.write(0x00);
   ret = Wire.endTransmission();
 
+  /* under certain conditions the GPIO expander may fail to intiialised.
+   * so check the initial write to it before allowing it to continue.
+   * note, makes the assumption if we get one good write, the rest will work
+   */
   if (ret != 0) {
     Serial.println("ERROR: failed to talk to PCA IO expander");
     while (true) { ESP.wdtFeed(); delay(1);
