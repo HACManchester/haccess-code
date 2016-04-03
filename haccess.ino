@@ -633,7 +633,7 @@ void loop() {
 
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
-    //processMqtt();
+    processMqtt();
     sayHello();
     process_wdt();
   }
