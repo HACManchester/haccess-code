@@ -10,7 +10,7 @@
 #include "pcd8544.h"
 #include "pcd8544_support.h"
 //#include "easygpio/easygpio.h"
-#include "easygpio.h"
+//#include "easygpio.h"
 #include "osapi.h"
 #include "ets_sys.h"
 #include "os_type.h"
