@@ -17,6 +17,9 @@ void gpio_exp_wr(uint8_t reg, uint8_t val)
 
 void gpio_exp_setgpio(unsigned gpio, bool to)
 {
+  if (gpio >= 8)
+    return;
+
   if (to)
     olat_state |= 1 << gpio;
   else
