@@ -526,7 +526,7 @@ unsigned long lastTimer = 0;
 unsigned long lastMQTT = 0;
 
 // intervals for checking the card
-const unsigned long cardInterval = 2500;
+const unsigned long cardInterval = 250;
 const unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
 const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
 const unsigned long mqttInterval = 500;      // check for mqtt state
@@ -661,7 +661,7 @@ void loop() {
     runDisplay();
     processMqtt();
     //sayHello();
-    //process_wdt();
+    process_wdt();
   }
 
   // always check gpios through the loop
