@@ -239,12 +239,12 @@ void setupDisplay(void)
   pcd8544_settings.inverse = false;
 
   //pcd8544_settings.resetPin = 32 + 4; // 4;
-  pcd8544_settings.resetPin = 128;        // reset handled at init time.
+  pcd8544_settings.resetPin = 127;        // reset handled at init time.
   //pcd8544_settings.scePin = 16; //5;
   //pcd8544_settings.scePin = 32+5;
-  pcd8544_settings.scePin = 128;          // sce pin isn't being used on v2 boards
+  pcd8544_settings.scePin = 127;          // sce pin isn't being used on v2 boards
 
-  pcd8544_settings.dcPin = 32 + 5;
+  pcd8544_settings.dcPin = 0;
   pcd8544_settings.sdinPin = 13;
   pcd8544_settings.sclkPin = 14;
 
@@ -323,10 +323,12 @@ void setup() {
 
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
-  pinMode(12, INPUT);
   pinMode(13, OUTPUT);
-  pinMode(16, OUTPUT);
+  pinMode(0, OUTPUT);
+  
+  pinMode(16, OUTPUT);  // WS LED
 
+  pinMode(12, INPUT);   // IRQ from card reader
   pinMode(2, INPUT);    // irq pin
 
   // set the pins
@@ -339,11 +341,8 @@ void setup() {
   setup_gpioexp();
   process_wdt();
 
-  gpio_exp_setgpio(4, 0); // set the display nReset=1
   gpio_exp_setgpio(5, 0); // set the display nCS=0
-  gpio_exp_setgpio(4, 1); // set the display nReset=1
-
-  gpio_exp_setgpio(6, 1);
+  gpio_exp_setgpio(6, 1); // set the display BL=1 (on)
   setupDisplay();
 
   Serial.println("MAC " + WiFi.macAddress());
@@ -506,7 +505,7 @@ static void serial_interaction(void)
       break;
 
     case 'G':
-      Serial.printf("GPIO state %x\n", gpio_exp_rd(MCP_GPIO));
+      Serial.printf("GPIO state %x, IODIR=%x, INTF=%x PU=%x\n", gpio_exp_rd(MCP_GPIO), gpio_exp_rd(MCP_IODIR), gpio_exp_rd(MCP_INTF), gpio_exp_rd(MCP_GPPU));
       break;
 
     case 'p':
