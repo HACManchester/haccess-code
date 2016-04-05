@@ -133,11 +133,11 @@ void setup_gpioexp(void)
   // set no input to non inverted
   gpio_exp_wr(MCP_IPOL, 0x0);
 
-  // set output values
-  gpio_exp_initout(0x80);       // start with the led off
-
   // set the io-direction to make GP[7..4] to output
   gpio_exp_wr(MCP_IODIR, byte(0xff ^ 0xF0));
+
+  // set output values
+  gpio_exp_initout(0x80);       // start with the led off
 
   // interrupt settings
 
@@ -197,6 +197,10 @@ static void init_nfc(void)
   nfc.begin();
 
   uint32_t versiondata = nfc.getFirmwareVersion();
+
+  Serial.print("NFC version info is ");
+  Serial.println(versiondata, HEX);
+
   if (! versiondata) {
     Serial.println("Didn't find PN53x board");
     return;
@@ -206,8 +210,6 @@ static void init_nfc(void)
     Serial.println("Device is not PN532?");
   }
 
-  Serial.print("NFC version info is ");
-  Serial.println(versiondata, HEX);
 
   nfc.setPassiveActivationRetries(1);
   nfc.SAMConfig();
@@ -324,6 +326,8 @@ void setup() {
   pinMode(12, INPUT);
   pinMode(13, OUTPUT);
   pinMode(16, OUTPUT);
+
+  pinMode(2, INPUT);    // irq pin
 
   // set the pins
   digitalWrite(15, 0);
