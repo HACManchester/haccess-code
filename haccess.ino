@@ -238,10 +238,7 @@ void setupDisplay(void)
   pcd8544_settings.biasMode = 0x14;
   pcd8544_settings.inverse = false;
 
-  //pcd8544_settings.resetPin = 32 + 4; // 4;
   pcd8544_settings.resetPin = 127;        // reset handled at init time.
-  //pcd8544_settings.scePin = 16; //5;
-  //pcd8544_settings.scePin = 32+5;
   pcd8544_settings.scePin = 127;          // sce pin isn't being used on v2 boards
 
   pcd8544_settings.dcPin = 0;
