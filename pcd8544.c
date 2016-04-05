@@ -261,7 +261,7 @@ PCD8544_shiftOut8(bool msbFirst, uint8_t data) {
     }
   }
   os_delay_us(2*CLOCK_HIGH_TIME);
-  __GPIO_OUTPUT_SET(pinSclk, 1); //bjd
+  //__GPIO_OUTPUT_SET(pinSclk, 1); //bjd
 }
 
 static void ICACHE_FLASH_ATTR
