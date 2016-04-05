@@ -236,11 +236,13 @@ void setupDisplay(void)
   pcd8544_settings.biasMode = 0x14;
   pcd8544_settings.inverse = false;
 
-  pcd8544_settings.resetPin = 32 + 4; // 4;
+  //pcd8544_settings.resetPin = 32 + 4; // 4;
+  pcd8544_settings.resetPin = 128;        // reset handled at init time.
   //pcd8544_settings.scePin = 16; //5;
-  pcd8544_settings.scePin = 32+5;
+  //pcd8544_settings.scePin = 32+5;
+  pcd8544_settings.scePin = 128;          // sce pin isn't being used on v2 boards
 
-  pcd8544_settings.dcPin = 0;
+  pcd8544_settings.dcPin = 32 + 5;
   pcd8544_settings.sdinPin = 13;
   pcd8544_settings.sclkPin = 14;
 
@@ -333,6 +335,7 @@ void setup() {
   setup_gpioexp();
   process_wdt();
 
+  gpio_exp_setgpio(4, 0); // set the display nReset=1
   gpio_exp_setgpio(5, 0); // set the display nCS=0
   gpio_exp_setgpio(4, 1); // set the display nReset=1
 
@@ -414,7 +417,7 @@ static void checkForCard(void)
 
   //Serial.println("Reading card");
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
-  //Serial.println("Read card");
+  //Serial.println("Read card");mq
 
   if (success) {
     detect_count = 5;
@@ -453,6 +456,8 @@ static void checkGPIOs(void)
     gpio &= 7;
     if (gpio == old_gpio)
       return;
+
+    Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
 
     PCD8544_gotoXY(64 + 8, 0);
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
@@ -496,6 +501,10 @@ static void serial_interaction(void)
       gpio_exp_setgpio(6, 1);
       break;
 
+    case 'G':
+      Serial.println(gpio_exp_rd(MCP_GPIO));
+      break;
+
     case 'p':
     case 'P':
       Serial.println("@goto 0,0");
@@ -517,7 +526,7 @@ unsigned long lastTimer = 0;
 unsigned long lastMQTT = 0;
 
 // intervals for checking the card
-const unsigned long cardInterval = 250;
+const unsigned long cardInterval = 2500;
 const unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
 const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
 const unsigned long mqttInterval = 500;      // check for mqtt state
@@ -603,6 +612,9 @@ static bool mqtt_known = false;
 
 static void processMqtt(void)
 {
+  if (true)
+    return;
+  
   if (!mqtt.connected()) {
     mqtt_known = false;
     Serial.println("MQTT not connected");
@@ -642,14 +654,14 @@ void loop() {
   if (timeTo(&lastCard, cardInterval, curtime) && true)
     checkForCard();
 
-  if (timeTo(&lastFile, fileInterval, curtime))
+  if (timeTo(&lastFile, fileInterval, curtime) && false)
     checkForNewFiles();
 
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
     processMqtt();
-    sayHello();
-    process_wdt();
+    //sayHello();
+    //process_wdt();
   }
 
   // always check gpios through the loop
