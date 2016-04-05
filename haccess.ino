@@ -502,7 +502,7 @@ static void serial_interaction(void)
       break;
 
     case 'G':
-      Serial.println(gpio_exp_rd(MCP_GPIO));
+      Serial.printf("GPIO state %x\n", gpio_exp_rd(MCP_GPIO));
       break;
 
     case 'p':
