@@ -17,6 +17,8 @@ void gpio_exp_wr(uint8_t reg, uint8_t val)
 
 void gpio_exp_setgpio(unsigned gpio, bool to)
 {
+  uint8_t old_state = olat_state;
+
   if (gpio >= 8)
     return;
 
@@ -25,7 +27,8 @@ void gpio_exp_setgpio(unsigned gpio, bool to)
   else
     olat_state &= ~(1 << gpio);
   
-  gpio_exp_wr(MCP_OLAT, olat_state);
+  if (olat_state != old_state)
+    gpio_exp_wr(MCP_OLAT, olat_state);
 }
 
 void gpio_exp_initout(uint8_t to)
