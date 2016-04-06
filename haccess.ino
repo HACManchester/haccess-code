@@ -406,6 +406,7 @@ static void show_unknown_card(class CardInfo *info, uint8_t *uid, uint8_t uidLen
   }
 }
 
+static int card_ok_count;
 static bool show_card = true;
 
 static void checkForCard(void)
@@ -437,6 +438,7 @@ static void checkForCard(void)
     if (lookupCard(&info, uid, uidLength)) {
       Serial.println("Found card " + info.logname);
       show_known_card(&info, uid, uidLength);
+      card_ok_count = 3;
     } else {
       Serial.println("Found unknown card");
       show_unknown_card(&info, uid, uidLength);
@@ -465,7 +467,7 @@ static void checkGPIOs(void)
     PCD8544_lcdCharacter((gpio & 4) ? 'x' : '-');
     old_gpio = gpio;
 
-    gpio_exp_setgpio(7, (gpio & 4) ? true : false);
+    // test: mirror to port expander gpio_exp_setgpio(7, (gpio & 4) ? false : true);
 
     button_count = 5;
   } else {
@@ -662,6 +664,10 @@ void loop() {
     processMqtt();
     //sayHello();
     process_wdt();
+
+    gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);
+    if (card_ok_count > 0)
+      card_ok_count--;
   }
 
   // always check gpios through the loop
