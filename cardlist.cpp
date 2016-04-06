@@ -85,15 +85,10 @@ void readCardList(File f)
   }
 }
 
-static char toHex(uint8_t val)
-{
-  return (val < 0xA) ? (val + '0') : (val + 'A' - 10);
-}
-
 bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
 {
-  String uid_full;
-  String uid_short;
+  char  uid_full[64];
+  char *uid_short;
   String uidstr;
   String l;
   unsigned ptr;
@@ -105,11 +100,10 @@ bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
   }
 
   for (ptr = 0; ptr < uidLength; ptr++) {
-    uid_full += toHex(uid[ptr] >> 4);
-    uid_full += toHex(uid[ptr] & 0xf);
+    sprintf(uid_full + (ptr * 2), "%02x", uid[ptr]);
   }
 
-  Serial.println("UID: " + uid_full);
+  Serial.printf("UID: %s\n", uid_full);
 
   if (uidLength == 4) {
     uid_short = uid_full;
@@ -132,7 +126,7 @@ bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
     Serial.println("read uid is " + l.substring(0,sep));
 
     uidstr = l.substring(0, sep);
-    if (uidstr.equals(uid_full) || uidstr.equals(uid_short)) {
+    if (uidstr.equalsIgnoreCase(uid_full) || uidstr.equalsIgnoreCase(uid_short)) {
       int nick = l.indexOf(',', sep+1);
       int full = l.indexOf(',', nick+1);
 
