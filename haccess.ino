@@ -662,7 +662,7 @@ void loop() {
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
     processMqtt();
-    //sayHello();
+    sayHello();
     process_wdt();
 
     gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);
