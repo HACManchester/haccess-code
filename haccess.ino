@@ -43,6 +43,7 @@ extern "C" {
 //Adafruit_PCD8544 display = Adafruit_PCD8544(14, 13, -1, 0, -2);
 
 // local includes
+#include "haccess.h"
 #include "cards.h"
 #include "gpioexp.h"
 #include "urlwatch.h"
@@ -267,10 +268,10 @@ static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 static void setup_mqtt(void)
 {
   char servname[128];
-  char tmp[32];
+  char tmp[128];
   uint16_t port;
 
-  if (cfgfile.getValue("mqtt", "Server", servname, sizeof(servname))) {
+  if (cfgfile.getValue("mqtt", "server", servname, sizeof(servname))) {
     // that's ok
     Serial.println(servname);
   } else {
@@ -278,7 +279,7 @@ static void setup_mqtt(void)
     sprintf(servname, "acidburn");
   }
 
-  if (cfgfile.getValue("mqtt", "Port", tmp, sizeof(tmp), port)) {
+  if (cfgfile.getValue("mqtt", "port", tmp, sizeof(tmp), port)) {
     // ok
     Serial.print("mqtt port ");
     Serial.println(port, DEC);
