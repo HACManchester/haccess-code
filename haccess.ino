@@ -53,6 +53,12 @@ extern "C" {
 // configuration file
 IniFile cfgfile;
 
+struct config cfg = {
+  .en_rfid = true,
+  .en_mqtt = false,
+  .rfid_interval = 250,
+};
+
 // MQTT state
 WiFiClient mqttWiFi;
 PubSubClient mqtt(mqttWiFi);
@@ -528,7 +534,6 @@ unsigned long lastTimer = 0;
 unsigned long lastMQTT = 0;
 
 // intervals for checking the card
-const unsigned long cardInterval = 250;
 const unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
 const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
 const unsigned long mqttInterval = 500;      // check for mqtt state
@@ -653,7 +658,7 @@ void loop() {
 
   curtime = millis();
 
-  if (timeTo(&lastCard, cardInterval, curtime) && true)
+  if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid)
     checkForCard();
 
   if (timeTo(&lastFile, fileInterval, curtime) && false)

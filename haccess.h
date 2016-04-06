@@ -26,3 +26,11 @@ extern bool fs_opened;
 #define GPIO_OUT_RST	(GPIO_EXP(4))
 #define GPIO_OUT_LCD_nCS (GPIO_EXP(5))
 #define GPIO_OUT_OPTO	(GPIO_EXP(7))
+
+struct config {
+  bool en_rfid;     /**< Set if RFID read is required */
+  bool en_mqtt;     /**< Set to use MQTT */
+
+  unsigned int rfid_interval;   /**< RFID poll interval */
+};
+
