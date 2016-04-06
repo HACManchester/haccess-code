@@ -144,7 +144,7 @@ void setup_gpioexp(void)
   gpio_exp_wr(MCP_IODIR, byte(0xff ^ 0xF0));
 
   // set output values
-  gpio_exp_initout(0x80);       // start with the led off
+  gpio_exp_initout(0x00);       // start with all off
 
   // interrupt settings
 
