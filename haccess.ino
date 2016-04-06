@@ -278,14 +278,18 @@ static void setup_mqtt(void)
     Serial.println("default mqtt server");
     sprintf(servname, "acidburn");
   }
+  cfg.mqtt_server = strdup(servname);
 
+  cfgfile.clearError();
   if (cfgfile.getValue("mqtt", "port", tmp, sizeof(tmp), port)) {
     // ok
+    if (cfgfile.getError() != cfgfile.errorNoError)
+      Serial.print("read true, but error?");
     Serial.print("mqtt port ");
     Serial.println(port, DEC);
   } else {
     Serial.println("default mqtt port");
-    port = 1883;
+    cfg.mqtt_port = 1883;
   }
 
   mqtt_server = strdup(servname);

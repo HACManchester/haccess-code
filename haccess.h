@@ -32,5 +32,8 @@ struct config {
   bool en_mqtt;     /**< Set to use MQTT */
 
   unsigned int rfid_interval;   /**< RFID poll interval */
+
+  char *mqtt_server;
+  uint16_t mqtt_port;
 };
 
