@@ -3,12 +3,10 @@
 
 extern bool fs_opened;
 
-
-
 /* GPIO mappings for the GPIO expander */
 
 #define GPIO_EXP(__g)	((__g) + 32)
-
+ 
 // gpio expander:
 // gp0 = in_r
 // gp1 = in_g
