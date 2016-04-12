@@ -5,7 +5,7 @@
  */
 
 #include <vector>
-#include <string>
+#include <string.h>
 
 /* base class for any trigger */
 class trigger {
@@ -24,6 +24,7 @@ class trigger {
   bool get_modify(void) { return modified; };
 
   void add_dependency(class trigger *trig);
+  void run_depends(void (*fn)(class trigger *trig));
 
   // default is to do nothing
  protected:
@@ -37,7 +38,21 @@ class trigger {
   bool modified;
 };
 
+extern class trigger *trigger_find(const char *name);
+extern void trigger_run_all(void (*fn)(class trigger *trig));
+
+#if 0
+// the following is not working in the arduino
 #define for_all_triggers(__ptr, __vector) for (__ptr : __vector)
+#else
+
+#endif
+
+class input_trigger : public trigger {
+};
+
+class output_trigger : public trigger {
+};
 
 class and_trigger : public trigger {
  protected:
