@@ -26,9 +26,11 @@ class trigger {
   void add_dependency(class trigger *trig);
   void run_depends(void (*fn)(class trigger *trig));
 
+  void (*notify_fn)(class trigger *trig, bool to);
+
   // default is to do nothing
  protected:
-  virtual void notify(bool to) { };
+  virtual void notify(bool to);
   virtual bool recalc(class trigger *trig) { return false; }
 
   char * name;
@@ -52,6 +54,8 @@ class input_trigger : public trigger {
 };
 
 class output_trigger : public trigger {
+protected:
+  bool recalc(class trigger *trig);
 };
 
 class and_trigger : public trigger {
@@ -81,3 +85,14 @@ class sr_trigger : public trigger {
   std::vector<trigger *> reset;
   std::vector<trigger *> set; 
 };
+
+class timer_trigger : public trigger {
+  void set_length(unsigned len);
+  unsigned get_length(void);
+
+ protected:
+  bool recalc(class trigger *trig);
+
+ private:
+};
+

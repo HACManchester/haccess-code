@@ -21,19 +21,6 @@
 
 static std::vector<trigger *> triggers;
 
-class trigger *test(const char *name)
-{
-  class trigger *ptr;
-  std::vector<trigger *>::iterator it;
-
-  for (it = triggers.begin(), ptr = *it; it != triggers.end(); it++, ptr = *it) {
-    if (strcmp(ptr->get_name(), name) == 0)
-      return ptr;  
-  }
-
-  return NULL;
-}
-
 class trigger *trigger_find(const char *name)
 {
   std::vector<class trigger *>::iterator it;
@@ -108,6 +95,12 @@ void trigger::depend_change(class trigger *trig)
   bool nstate = this->recalc(trig);
   __log("DBG: %s: this %s. trig %s: %d\n", __func__, this->name, trig->name, nstate);
   this->new_state(nstate);
+}
+
+void trigger::notify(bool to)
+{
+  if (notify_fn)
+    (notify_fn)(this, to);
 }
 
 static bool find_in_triggers(class trigger *trig, std::vector<trigger *> list)
@@ -187,3 +180,23 @@ bool sr_trigger::recalc(class trigger *trig)
 
   return state;
 };
+
+bool output_trigger::recalc(class trigger *trig)
+{
+  std::vector<class trigger *>::iterator it;
+  class trigger *ptr;
+
+  __log("output_trigger: dep change %s by %s\n", this->get_name(), trig->get_name());
+
+  if (this->depends.size() == 0)
+    return false;
+
+  for_all_triggers(ptr, this->depends) {
+    __log("or_trigger: dep %s is %d\n", ptr->get_name(), ptr->get_state());
+
+    if (ptr->get_state())
+      return true;
+  }
+
+  return false;
+}
