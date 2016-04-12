@@ -1,0 +1,26 @@
+add input in1
+add input in2
+
+add and and1
+dep and1 in1
+dep and1 in2
+
+add or or1
+dep or1 in1
+dep or1 in2
+
+set in1 1
+set in2 0
+dump
+
+set in1 0
+set in2 1
+dump
+
+set in1 1
+set in2 1
+dump
+
+set in1 0
+set in2 0
+dump
