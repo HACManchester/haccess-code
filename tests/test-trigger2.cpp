@@ -35,6 +35,11 @@ static trigger *get_trig(char *name)
   return trig;
 }
 
+static void output_fn(class trigger *trig, bool to)
+{
+  printf("<< trigger %s is now %d\n", trig->get_name(), to);
+}
+
 static int process_add(int argc, char **args)
 {
   class trigger *trig;
@@ -54,9 +59,8 @@ static int process_add(int argc, char **args)
   } else if (strcmp(args[0], "input") == 0) {
     trig = new input_trigger;
   } else if (strcmp(args[0], "output") == 0) {
-    class output_trigger *otrig;
-    otrig = new output_trigger;
-    trig = otrig;
+    trig = new output_trigger;
+    trig->notify_fn = output_fn;
   } else {
     fprintf(stderr, "unknown triger type '%s'\n", args[0]);
     return 2;

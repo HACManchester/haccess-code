@@ -1,12 +1,17 @@
 add input set
 add input reset
+add output out
 
 add sr sr1
 dep-s sr1 set
 dep-r sr1 reset
 
+dep out sr1
+
 set set 1
 set reset 0
+
+dump
 
 set set 0
 set reset 1
