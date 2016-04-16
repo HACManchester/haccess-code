@@ -4,6 +4,7 @@
  * Copyright 2016 Ben Dooks <ben@fluff.org>
  */
 
+#include <iterator>
 #include <vector>
 #include <string.h>
 
@@ -78,8 +79,8 @@ class sr_trigger : public trigger {
   bool recalc(class trigger *trig);
 
  public:
-  void add_set(class trigger *trig) { set.push_back(trig); add_dependency(trig); }
-  void add_reset(class trigger *trig) { reset.push_back(trig); add_dependency(trig); }  
+  void add_set(class trigger *trig) { set.push_back(trig); add_dependency(trig); };
+  void add_reset(class trigger *trig) { reset.push_back(trig); add_dependency(trig); };
 
  private:
   std::vector<trigger *> reset;
