@@ -3,10 +3,12 @@
  *  Copyright 2016 Ben Dooks
  */
 
+#ifndef __TIMER_H
+#define __TIMER_H __FILE__
+
 #include <vector>
 
-
-static inline bool has_expired(unsigned long curtime, unsigned long lasttime, unsigned long interval)
+static inline bool time_expired(unsigned long curtime, unsigned long lasttime, unsigned long interval)
 {
   return ((curtime - lasttime) >= interval);
 }
@@ -20,7 +22,7 @@ class timer {
       this->param = param;
     };
     bool expired(unsigned long cur) {
-      return has_expired(cur, this->start, this->expires);
+      return time_expired(cur, this->start, this->expires);
     };
   protected:
     void (*fn)(void *param);
@@ -35,5 +37,6 @@ extern void timer_sched(unsigned long ms);
 
 #ifndef ESP8266
 extern unsigned long millis(void);
+#endif
 #endif
 
