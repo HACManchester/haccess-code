@@ -69,7 +69,7 @@ static int process_add(int argc, char **args)
   } else if (strcmp(args[0], "timer") == 0) {
     class timer_trigger *tt = new timer_trigger;
 
-    tt->set_length(1000);   // default is 1sec
+    tt->set_length(1000UL);   // default is 1sec
     trig = tt;
   } else {
     fprintf(stderr, "unknown triger type '%s'\n", args[0]);
@@ -272,6 +272,22 @@ static int start_timer(void)
   return 0;
 }
 
+static void do_sleep(unsigned long sl)
+{
+  struct timespec ts, rem;
+  int ret;
+
+  ts.tv_sec = sl / 1000;
+  ts.tv_nsec = (sl % 1000) * 1000;
+
+  do {
+    ret = nanosleep(&ts, &rem);
+    if (ret == 0)
+      break;
+    ts = rem;
+  } while (ts.tv_sec != 0 && ts.tv_nsec != 0);
+}
+
 int main(void)
 {
   char *line;
@@ -310,7 +326,7 @@ int main(void)
       process_dep_reset(ret, args+1);
     } else if (strcmp(args[0], "sleep") == 0) {
       unsigned long l = strtoul(args[1], NULL, 10);
-      usleep(l * 1000);
+      do_sleep(l);
     } else if (strcmp(args[0], "dump") == 0) {
       process_dump(ret, args+1);
     } else if (strcmp(args[0], "quit") == 0) {
