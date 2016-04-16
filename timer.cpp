@@ -31,10 +31,16 @@ void timer::fire(void)
   this->fn(this->param);
 }
 
+static unsigned long last_time = ~0UL;
+
 void timer_sched(unsigned long curtime)
 {
   std::vector<timer *>::iterator it;
   class timer *ptr;
+
+  if (curtime == last_time)
+    return;
+  last_time = curtime;
 
   it = timers.begin();
   while (it != timers.end()) {
