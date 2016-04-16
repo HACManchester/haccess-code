@@ -9,8 +9,8 @@ all: triggers triggers2
 triggers2: trigger.o  timer.o test-trigger2.o
 	g++ -lrt -o triggers2  timer.o trigger.o test-trigger2.o
 
-triggers: trigger.o test-trigger.o
-	g++ -o triggers trigger.o test-trigger.o
+triggers: trigger.o timer.o test-trigger.o
+	g++ -o triggers timer.o trigger.o test-trigger.o
 
 timer.o:	../timer.h
 timer.o:	../timer.cpp

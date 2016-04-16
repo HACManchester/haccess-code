@@ -2,6 +2,11 @@
 
 #include <stdio.h>
 
+unsigned long millis(void)
+{
+  return 0;  // not using this
+}
+
 static void run_test(trigger *a, trigger *b, trigger *result)
 {
   a->new_state(false);
