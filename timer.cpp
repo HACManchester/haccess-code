@@ -48,4 +48,3 @@ void timer_sched(unsigned long curtime)
     }
   }
 }
-
