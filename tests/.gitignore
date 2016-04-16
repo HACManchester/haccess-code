@@ -1,0 +1,5 @@
+# tests gitignore file
+
+# binary output files
+triggers
+triggers2
