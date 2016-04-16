@@ -2,6 +2,7 @@
 // Copyright 2015 Ben Dooks <ben@fluff.org>
 
 #include "trigger.h"
+#include "timer.h"
 
 #include <ESP8266WiFi.h>
 #include "FS.h"
@@ -751,4 +752,6 @@ void loop() {
   if (Serial.available() > 0) {
     serial_interaction();
   }
+
+  timer_sched(curtime);
 }
