@@ -200,3 +200,27 @@ bool output_trigger::recalc(class trigger *trig)
 
   return false;
 }
+
+bool timer_trigger::recalc(class trigger *trig)
+{
+  if (trig->get_state())
+    return true;
+
+  if (!trig->get_state() && this->get_state()) {
+    this->timer.set(this->len);
+    return true;
+  }
+
+  return false;
+}
+
+static void trig_expiry_fn(void *ptr)
+{
+  class timer_trigger *tr = (class timer_trigger *)ptr;
+  tr->new_state(false);
+}
+
+timer_trigger::timer_trigger(void) : trigger()
+{
+  timer.expiry(trig_expiry_fn, this);
+}

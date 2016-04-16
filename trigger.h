@@ -8,6 +8,8 @@
 #include <vector>
 #include <string.h>
 
+#include "timer.h"
+
 /* base class for any trigger */
 class trigger {
  public:
@@ -85,12 +87,17 @@ class sr_trigger : public trigger {
 };
 
 class timer_trigger : public trigger {
-  void set_length(unsigned len);
-  unsigned get_length(void);
+ public:
+  timer_trigger();
+
+  void set_length(unsigned long len) { this->len = len; };
+  unsigned get_length(void) { return this->len; };
 
  protected:
   bool recalc(class trigger *trig);
 
  private:
+  unsigned long len;
+  class timer timer;
 };
 
