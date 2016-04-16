@@ -29,6 +29,9 @@ class trigger {
 
   void (*notify_fn)(class trigger *trig, bool to);
 
+  // if we're an input, then this is true, otherwise false
+  virtual bool is_input(void) { return false; };
+
   // default is to do nothing
  protected:
   virtual void notify(bool to);
@@ -45,6 +48,7 @@ extern class trigger *trigger_find(const char *name);
 extern void trigger_run_all(void (*fn)(class trigger *trig));
 
 class input_trigger : public trigger {
+  virtual bool is_input(void) { return true; };
 };
 
 class output_trigger : public trigger {
