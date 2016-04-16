@@ -1,7 +1,7 @@
 // Haccess v1 Access Control System
 // Copyright 2015 Ben Dooks <ben@fluff.org>
 
-#define _GLIBCXX_VECTOR
+#include "trigger.h"
 
 #include <ESP8266WiFi.h>
 #include "FS.h"
@@ -29,7 +29,7 @@
 #include <PubSubClient.h>
 
 //#include <vector>
-#include "trigger.h"
+
 
 // for the display (to be moved out)
 //#include <Adafruit_GFX.h>
@@ -128,7 +128,7 @@ class UrlWatch *watch_cfg = new UrlWatch("acidburn", 80, "/~ben/haccess/cardlist
 void setup_gpioexp(void)
 {
   int ret;
-  
+
   Serial.println("Initialising GPIO expander");
 
   pinMode(15, OUTPUT);
@@ -144,13 +144,14 @@ void setup_gpioexp(void)
    */
   if (ret != 0) {
     Serial.println("ERROR: failed to talk to PCA IO expander");
-    while (true) { ESP.wdtFeed(); delay(1);
+    while (true) {
+      ESP.wdtFeed(); delay(1);
       Wire.beginTransmission(MCP_IICADDR);
       Wire.write(0x00);
-     ret = Wire.endTransmission();
+      ret = Wire.endTransmission();
     }
   }
-  
+
   // set pull-ups for various pins
   gpio_exp_wr(MCP_GPPU, 0x3);   // todo - check for correct settings
 
@@ -279,6 +280,7 @@ void setupDisplay(void)
 static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
   class trigger *trig;
+  char *value = (char *)payload;
 
   Serial.printf("topic '%s', payload '%s', lenght %d\n", topic, payload, length);
   // nothing we really care about here at the moment
@@ -289,18 +291,18 @@ static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
   trig = trigger_find(topic);
   if (trig) {
-    if (strcmp(payload, "1") == 0 ||
-        strcmp(payload, "on") == 0) {
-          trig->new_state(true);
-        } else if (strcmp(payload, "0") == 0 ||
-                   strcmp(payload, "off") == 0) {
-          trig->new_state(false);
-        } else if (strcmp(payload, "signal") == 0) {
-          trig->new_state(true);
-          trig->new_state(false);
-        } else {
-          // did not understand //
-        }
+    if (strcmp(value, "1") == 0 ||
+        strcmp(value, "on") == 0) {
+      trig->new_state(true);
+    } else if (strcmp(value, "0") == 0 ||
+               strcmp(value, "off") == 0) {
+      trig->new_state(false);
+    } else if (strcmp(value, "signal") == 0) {
+      trig->new_state(true);
+      trig->new_state(false);
+    } else {
+      // did not understand //
+    }
   }
 }
 
@@ -370,7 +372,7 @@ static void setup_triggers(void)
   in_rfid_auth.set_name("input/rfid/auth");
 
   in_button1.set_name("input/button1");
-  in_button2.set_name("input/button2"); 
+  in_button2.set_name("input/button2");
   in_opto.set_name("input/gpio");
 
   out_opto.set_name("output/gpio");
@@ -385,7 +387,7 @@ void setup() {
   pinMode(14, OUTPUT);
   pinMode(13, OUTPUT);
   pinMode(0, OUTPUT);
-  
+
   pinMode(16, OUTPUT);  // WS LED
 
   pinMode(12, INPUT);   // IRQ from card reader
@@ -530,7 +532,7 @@ static void checkGPIOs(void)
     in_button2.new_state((gpio & 2) != 0);
     in_opto.new_state((gpio & 4) != 0);
 
-    PCD8544_gotoXY(64+5, 0);
+    PCD8544_gotoXY(64 + 5, 0);
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 2) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 4) ? 'x' : '-');
@@ -684,7 +686,7 @@ static void processMqtt(void)
 {
   if (true)
     return;
-  
+
   if (!mqtt.connected()) {
     mqtt_known = false;
     Serial.println("MQTT not connected");
