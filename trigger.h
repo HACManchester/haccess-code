@@ -44,13 +44,6 @@ class trigger {
 extern class trigger *trigger_find(const char *name);
 extern void trigger_run_all(void (*fn)(class trigger *trig));
 
-#if 0
-// the following is not working in the arduino
-#define for_all_triggers(__ptr, __vector) for (__ptr : __vector)
-#else
-
-#endif
-
 class input_trigger : public trigger {
 };
 
