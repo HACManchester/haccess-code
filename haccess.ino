@@ -291,6 +291,11 @@ static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
   trig = trigger_find(topic);
   if (trig) {
+    if (!trig->is_input()) {
+      Serial.printf("topic '%s' is not input.\n", topic);
+      return;
+    }
+
     if (strcmp(value, "1") == 0 ||
         strcmp(value, "on") == 0) {
       trig->new_state(true);
