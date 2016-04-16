@@ -66,6 +66,11 @@ static int process_add(int argc, char **args)
   } else if (strcmp(args[0], "output") == 0) {
     trig = new output_trigger;
     trig->notify_fn = output_fn;
+  } else if (strcmp(args[0], "timer") == 0) {
+    class timer_trigger *tt = new timer_trigger;
+
+    tt->set_length(1000);   // default is 1sec
+    trig = tt;
   } else {
     fprintf(stderr, "unknown triger type '%s'\n", args[0]);
     return 2;
@@ -300,9 +305,12 @@ int main(void)
     } else if (strcmp(args[0], "dep") == 0) {
       process_dep(ret, args+1);
     } else if (strcmp(args[0], "dep-s") == 0) {
-      process_dep_set(ret, args+1);
+       process_dep_set(ret, args+1);
     } else if (strcmp(args[0], "dep-r") == 0) {
       process_dep_reset(ret, args+1);
+    } else if (strcmp(args[0], "sleep") == 0) {
+      unsigned long l = strtoul(args[1], NULL, 10);
+      usleep(l * 1000);
     } else if (strcmp(args[0], "dump") == 0) {
       process_dump(ret, args+1);
     } else if (strcmp(args[0], "quit") == 0) {
