@@ -192,7 +192,7 @@ bool output_trigger::recalc(class trigger *trig)
     return false;
 
   for_all_triggers(ptr, this->depends) {
-    __log("or_trigger: dep %s is %d\n", ptr->get_name(), ptr->get_state());
+    __log("output_trigger: dep %s is %d\n", ptr->get_name(), ptr->get_state());
 
     if (ptr->get_state())
       return true;
@@ -207,6 +207,7 @@ bool timer_trigger::recalc(class trigger *trig)
     return true;
 
   if (!trig->get_state() && this->get_state()) {
+    __log("timer_trigger: dep - fire for %lu\n", this->len);
     this->timer.set(this->len);
     return true;
   }
