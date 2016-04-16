@@ -1,6 +1,8 @@
 // Haccess v1 Access Control System
 // Copyright 2015 Ben Dooks <ben@fluff.org>
 
+#define _GLIBCXX_VECTOR
+
 #include <ESP8266WiFi.h>
 #include "FS.h"
 
@@ -25,6 +27,9 @@
 
 // mqtt server
 #include <PubSubClient.h>
+
+//#include <vector>
+#include "trigger.h"
 
 // for the display (to be moved out)
 //#include <Adafruit_GFX.h>
@@ -83,6 +88,18 @@ bool dbg_showCardRead = true;
 
 unsigned button_count;
 unsigned detect_count;
+
+// triggers
+
+class input_trigger in_rfid;
+class input_trigger in_rfid_auth;
+
+class input_trigger in_button1;
+class input_trigger in_button2;
+class input_trigger in_opto;
+
+class output_trigger out_opto;
+
 
 #if !defined(NFC_ELECHOUSE)
 #define PN_IIC 1
@@ -261,8 +278,30 @@ void setupDisplay(void)
 
 static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
+  class trigger *trig;
+
   Serial.printf("topic '%s', payload '%s', lenght %d\n", topic, payload, length);
   // nothing we really care about here at the moment
+
+  if (length < 1) {
+    return;     // ignore events with zero data.
+  }
+
+  trig = trigger_find(topic);
+  if (trig) {
+    if (strcmp(payload, "1") == 0 ||
+        strcmp(payload, "on") == 0) {
+          trig->new_state(true);
+        } else if (strcmp(payload, "0") == 0 ||
+                   strcmp(payload, "off") == 0) {
+          trig->new_state(false);
+        } else if (strcmp(payload, "signal") == 0) {
+          trig->new_state(true);
+          trig->new_state(false);
+        } else {
+          // did not understand //
+        }
+  }
 }
 
 static void setup_mqtt(void)
@@ -325,6 +364,19 @@ static void process_wdt(void)
   Wire.endTransmission();
 }
 
+static void setup_triggers(void)
+{
+  in_rfid.set_name("input/rfid");
+  in_rfid_auth.set_name("input/rfid/auth");
+
+  in_button1.set_name("input/button1");
+  in_button2.set_name("input/button2"); 
+  in_opto.set_name("input/gpio");
+
+  out_opto.set_name("output/gpio");
+  // todo - set output actions.
+}
+
 void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
@@ -368,6 +420,8 @@ void setup() {
 
   setup_mqtt();
   init_nfc();
+
+  setup_triggers();
 
   check_card_list();
   process_wdt();
@@ -472,7 +526,11 @@ static void checkGPIOs(void)
 
     Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
 
-    PCD8544_gotoXY(64 + 8, 0);
+    in_button1.new_state((gpio & 1) != 0);
+    in_button2.new_state((gpio & 2) != 0);
+    in_opto.new_state((gpio & 4) != 0);
+
+    PCD8544_gotoXY(64+5, 0);
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 2) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 4) ? 'x' : '-');
