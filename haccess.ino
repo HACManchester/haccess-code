@@ -423,6 +423,26 @@ static bool parse_time(char *buff, unsigned long *result)
   return true;
 }
 
+static void read_dependency_srcs(class trigger *target, const char *section, char *pfx)
+{
+  class trigger *src;
+  char name[20];
+  char tmp[64];
+  int nr;
+
+  for (nr = 0; nr < 99; nr++) {
+    sprintf(tmp, "%s%d", pfx, nr);
+    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
+      break;
+
+
+    src = get_trig(tmp);
+    if (src) {
+      target->add_dependency(src);
+    }
+  }
+}
+
 static bool read_trigger_timer(class timer_trigger *tt, const char *section, char *buff, int buff_sz)
 {
   unsigned long time;
@@ -443,6 +463,7 @@ static void read_trigger(const char *section)
 {
   class trigger *trig;
   char tmp[64];
+  bool bv = false;
 
   if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp)))
     goto parse_err;
@@ -472,7 +493,21 @@ static void read_trigger(const char *section)
   }
 
   // do any standard trigger parsing that's common to all triggers
-  // note, dependency information is handled elsewhere
+
+  if (cfgfile.getValue(section, "default", tmp, sizeof(tmp), bv)) {
+    trig->new_state(bv);
+  }
+
+  if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
+    // todo - attach to the mqtt handler
+  }
+
+  if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
+    // todo - attach an expirt timer to this
+  }
+
+  // note, dependency information can be handled elsewhere
+  read_dependency_srcs(trig, section, "source");
 
   return;
 
@@ -498,26 +533,6 @@ class trigger *cfg_lookup_trigger(const char *section, char *name)
       return NULL;
 
     return get_trig(tmp);
-}
-
-static void read_dependency_srcs(class trigger *target, const char *section, char *pfx)
-{
-  class trigger *src;
-  char name[20];
-  char tmp[64];
-  int nr;
-
-  for (nr = 0; nr < 99; nr++) {
-    sprintf(tmp, "%s%d", pfx, nr);
-    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
-      break;
-
-
-    src = get_trig(tmp);
-    if (src) {
-      target->add_dependency(src);
-    }
-  }
 }
 
 static void read_dependency(const char *section)
@@ -616,9 +631,9 @@ static void setup_triggers(void)
 
   in_button1.set_name("input/button1");
   in_button2.set_name("input/button2");
-  in_opto.set_name("input/gpio");
+  in_opto.set_name("input/opto");
 
-  out_opto.set_name("output/gpio");
+  out_opto.set_name("output/opto");
   // todo - set output actions.
 
   /* we run through the configuration files in several passes. As we need
