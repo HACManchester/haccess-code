@@ -1,3 +1,6 @@
 # ignore temporary files
 *~
 *.o
+
+# do not commit any of the following
+members.csv
