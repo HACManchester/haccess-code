@@ -512,9 +512,9 @@ static void read_trigger(const char *section)
       if (!tt || !ft)
         goto parse_err;
 
-      // todo - set edge on trigger
       tt->set_name("internal");
       tt->set_length(exptime);
+      tt->set_edge(true, true);
       tt->add_dependency(trig);
       ft->set_name("internal");
       ft->add_dependency(tt);
