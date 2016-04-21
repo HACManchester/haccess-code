@@ -503,7 +503,25 @@ static void read_trigger(const char *section)
   }
 
   if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
-    // todo - attach an expirt timer to this
+    unsigned long exptime;
+
+    if (parse_time(tmp, &exptime)) {
+      class timer_trigger *tt = new timer_trigger();
+      class forward_trigger *ft = new forward_trigger();
+
+      if (!tt || !ft)
+        goto parse_err;
+
+      // todo - set edge on trigger
+      tt->set_name("internal");
+      tt->set_length(exptime);
+      tt->add_dependency(trig);
+      ft->set_name("internal");
+      ft->add_dependency(tt);
+      ft->set_target(trig);
+    } else {
+      goto parse_err;
+    }
   }
 
   // note, dependency information can be handled elsewhere
