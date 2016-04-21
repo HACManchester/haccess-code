@@ -51,10 +51,12 @@ extern class trigger *trigger_find(const char *name);
 extern void trigger_run_all(void (*fn)(class trigger *trig));
 
 class input_trigger : public trigger {
+public:
   virtual bool is_input(void) { return true; };
 };
 
 class output_trigger : public trigger {
+public:
   virtual bool is_output(void) { return true; };
 protected:
   bool recalc(class trigger *trig);
@@ -101,5 +103,19 @@ class timer_trigger : public trigger {
  private:
   unsigned long len;
   class timer timer;
+};
+
+// allow forwarding change actions without having a dependency
+class forward_trigger: public trigger {
+public:
+  forward_trigger();
+
+  void set_target(class trigger *trig) { this->target = trig; };
+  void set_filter(bool off, bool on) { this->f_off = off; this->f_on = on; };
+ protected:
+  bool f_on, f_off;
+  class trigger *target;
+
+  bool recalc(class trigger *trig);
 };
 

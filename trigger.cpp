@@ -225,3 +225,20 @@ timer_trigger::timer_trigger(void) : trigger()
 {
   timer.expiry(trig_expiry_fn, this);
 }
+
+forward_trigger::forward_trigger()
+{
+  this->f_off = false;
+  this->f_on = false;
+}
+
+bool forward_trigger::recalc(class trigger *trig)
+{
+  bool state = trig->get_state();
+
+  if ((!state && this->f_off) ||
+      (state && this->f_on)) {
+     target->new_state(state);
+  }
+}
+
