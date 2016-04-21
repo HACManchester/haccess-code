@@ -499,7 +499,7 @@ static void read_trigger(const char *section)
   }
 
   if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
-    // todo - attach to the mqtt handler
+    // todo - attach to the mqtt handler?
   }
 
   if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
