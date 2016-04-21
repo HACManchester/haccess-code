@@ -33,6 +33,7 @@ class trigger {
 
   // if we're an input, then this is true, otherwise false
   virtual bool is_input(void) { return false; };
+  virtual bool is_output(void) { return false; };
 
   // default is to do nothing
  protected:
@@ -54,6 +55,7 @@ class input_trigger : public trigger {
 };
 
 class output_trigger : public trigger {
+  virtual bool is_output(void) { return true; };
 protected:
   bool recalc(class trigger *trig);
 };
