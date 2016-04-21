@@ -58,6 +58,7 @@ extern "C" {
 #include "IniFile.h"
 
 // configuration file
+File cfg_file;
 IniFile cfgfile;
 
 struct config cfg = {
@@ -354,6 +355,7 @@ static void open_config_file(void)
     return;
   }
 
+  cfg_file = cfg;
   cfgfile.setFile(cfg);
 }
 
@@ -372,6 +374,241 @@ static void process_wdt(void)
   Wire.endTransmission();
 }
 
+/*
+// look for a time-specification, in text format and return time in millis
+// for example:
+// 10c  => 10 centi-seconds
+/  10s  => 10 seconds
+// 10m  => 10 minutes
+// 10h  => 10 hours
+// is it worth having days in here?
+*/
+
+static bool parse_time(char *buff, unsigned long *result)
+{
+  unsigned long tmp;
+  char *ep = NULL;
+
+  tmp = strtoul(buff, &ep, 10);
+  if (ep == buff)
+    return false;
+
+  *result = tmp;
+  if (ep[0] < 32)
+    return true;
+
+  switch (ep[0]) {
+    case 's':
+      tmp *= 1000;
+      break;
+
+    case 'm':
+      if (ep[1] != 's')
+        tmp *= 1000 * 60;
+      break;
+
+    case 'c':
+      tmp *= 10;
+      break;
+
+    case 'h':
+      tmp *= 1000 * 60 * 60;
+      break;
+
+    default:
+      return false;
+  }
+
+  *result = tmp;
+  return true;
+}
+
+static bool read_trigger_timer(class timer_trigger *tt, const char *section, char *buff, int buff_sz)
+{
+  unsigned long time;
+
+  tt->set_length(1000UL);   // default is 1sec
+
+  if (cfgfile.getValue(section, "time", buff, buff_sz)) {
+    if (!parse_time(buff, &time))
+      return false;
+
+    tt->set_length(time);
+  }
+
+  return true;
+}
+
+static void read_trigger(const char *section)
+{
+  class trigger *trig;
+  char tmp[64];
+
+  if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp)))
+    goto parse_err;
+
+  if (strcmp(tmp, "sr") == 0) {
+    trig = new sr_trigger();
+  } else if (strcmp(tmp, "or") == 0) {
+    trig = new or_trigger();
+  } else if (strcmp(tmp, "and") == 0) {
+    trig = new and_trigger();
+  } else if (strcmp(tmp, "not") == 0) {
+    trig = new not_trigger();
+  } else if (strcmp(tmp, "timer") == 0) {
+    class timer_trigger *tt = new timer_trigger();
+
+    if (tt) {
+      if (!read_trigger_timer(tt, section, tmp, sizeof(tmp)))
+        goto parse_err;
+    }
+    trig = tt;
+  } else
+    goto parse_err;
+
+  if (!trig) {
+    Serial.printf("no memory for trigger\n");
+    return;
+  }
+
+  // do any standard trigger parsing that's common to all triggers
+  // note, dependency information is handled elsewhere
+
+  return;
+
+parse_err:
+  Serial.printf("failed parsing '%s'\n", section);
+}
+
+static class trigger *get_trig(char *name)
+{
+    class trigger *trig = trigger_find(name);
+
+    if (!trig)
+      Serial.printf("ERROR: failed to find '%s'\n", name);
+    return trig;
+}
+
+class trigger *cfg_lookup_trigger(const char *section, char *name)
+{
+    class trigger *trig;
+    char tmp[64];
+
+    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
+      return NULL;
+
+    return get_trig(tmp);
+}
+
+static void read_dependency_srcs(class trigger *target, const char *section, char *pfx)
+{
+  class trigger *src;
+  char name[20];
+  char tmp[64];
+  int nr;
+
+  for (nr = 0; nr < 99; nr++) {
+    sprintf(tmp, "%s%d", pfx, nr);
+    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
+      break;
+
+
+    src = get_trig(tmp);
+    if (src) {
+      target->add_dependency(src);
+    }
+  }
+}
+
+static void read_dependency(const char *section)
+{
+  class trigger *target = cfg_lookup_trigger(section, "target");
+  class trigger *src;
+  char tmp[64];
+  int nr;
+
+  if (!target)
+    return;
+
+  read_dependency_srcs(target, section, "source");
+  // todo - if set/reset, add set/reset dependencies
+}
+
+static String get_section(String line)
+{
+  int end = line.indexOf(']');
+
+  if (end > 1)
+    return line.substring(1, end-1);
+  return "";
+}
+
+static void read_triggers(void)
+{
+  File f = cfg_file;
+  String line;
+  uint32_t pos = 0;
+
+  if (!f)
+    return;
+
+  while (true) {
+    if (!f.seek(pos, SeekSet)) {
+      Serial.println("read_triggers: failed seek\n");
+      break;
+    }
+
+    line = f.readStringUntil('\n');
+    // is line null if this fails?
+
+    if (line.startsWith("[logic") ||
+        line.startsWith("[input") ||
+        line.startsWith("[output")) {
+      String section = get_section(line);
+      read_trigger(section.c_str());
+    }
+    pos += line.length();
+  }
+}
+
+static void read_depends(void)
+{
+  File f = cfg_file;
+  String line;
+  uint32_t pos = 0;
+
+  if (!f)
+    return;
+
+  while (true) {
+    if (!f.seek(pos, SeekSet)) {
+      Serial.println("read_triggers: failed seek\n");
+      break;
+    }
+
+    line = f.readStringUntil('\n');
+    // is line null if this fails?
+
+    if (line.startsWith("[dependency")) {
+      String section = get_section(line);
+      read_dependency(section.c_str());
+    }
+    pos += line.length();
+  }
+}
+
+static void dump_trig_dep(class trigger *trig)
+{
+  Serial.printf(" Dep %s: %d\n", trig->get_name(), trig->get_state());
+}
+
+static void dump_trigger(class trigger *trig)
+{
+  Serial.printf("Trigger %s: %d\n", trig->get_name(), trig->get_state());
+  trig->run_depends(dump_trig_dep);
+  Serial.println("");
+}
+
 static void setup_triggers(void)
 {
   in_rfid.set_name("input/rfid");
@@ -383,6 +620,17 @@ static void setup_triggers(void)
 
   out_opto.set_name("output/gpio");
   // todo - set output actions.
+
+  /* we run through the configuration files in several passes. As we need
+   * unique section names, we need to work through until weve read all
+   * the lines */
+
+  read_triggers();
+  read_depends();
+
+  if (true) {
+    trigger_run_all(dump_trigger);
+  }
 }
 
 void setup() {
