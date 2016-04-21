@@ -63,6 +63,7 @@ trigger::trigger()
 void trigger::new_state(bool to)
 {
   std::vector<class trigger *>::iterator it;
+  bool prev_state = this->state;
   class trigger *ptr;
 
   __log("DBG: %s, %s new_state %d (was %d)\n",
@@ -77,7 +78,7 @@ void trigger::new_state(bool to)
 
   for_all_triggers(ptr, triggers) {
     if (ptr->depends_on(this))
-      ptr->depend_change(this);
+      ptr->depend_change(this, prev_state);
   }
 
   this->modified = false;
@@ -87,12 +88,12 @@ void trigger::add_dependency(class trigger *trig)
 {
   __log("DBG: trigger %s depends on %s\n", this->name, trig->name);
   this->depends.push_back(trig);
-  this->depend_change(trig);  // force re-calculation of state //
+  this->depend_change(trig, trig->get_state());  // force re-calculation of state //
 }
 
-void trigger::depend_change(class trigger *trig)
+void trigger::depend_change(class trigger *trig, bool prev)
 {
-  bool nstate = this->recalc(trig);
+  bool nstate = this->recalc(trig, prev);
   __log("DBG: %s: this %s. trig %s: %d\n", __func__, this->name, trig->name, nstate);
   this->new_state(nstate);
 }
@@ -123,7 +124,7 @@ bool trigger::depends_on(class trigger *trig)
 
 /* for the moment we'll stick the trigger code in here */
 
-bool and_trigger::recalc(class trigger *trig)
+bool and_trigger::recalc(class trigger *trig, bool prev)
 {
   std::vector<class trigger *>::iterator it;
   class trigger *ptr;
@@ -137,7 +138,7 @@ bool and_trigger::recalc(class trigger *trig)
   return true;
 }
 
-bool not_trigger::recalc(class trigger *trig)
+bool not_trigger::recalc(class trigger *trig, bool prev)
 {
   if (depends.size() < 1)
     return false;
@@ -145,7 +146,7 @@ bool not_trigger::recalc(class trigger *trig)
   return !depends[0]->get_state();
 }
 
-bool or_trigger::recalc(class trigger *trig)
+bool or_trigger::recalc(class trigger *trig, bool prev)
 {
   std::vector<class trigger *>::iterator it;
   class trigger *ptr;
@@ -163,7 +164,7 @@ bool or_trigger::recalc(class trigger *trig)
   return false;
 }
 
-bool sr_trigger::recalc(class trigger *trig)
+bool sr_trigger::recalc(class trigger *trig, bool prev)
 {
   std::vector<class trigger *>::iterator it;
   class trigger *ptr;
@@ -181,7 +182,7 @@ bool sr_trigger::recalc(class trigger *trig)
   return state;
 };
 
-bool output_trigger::recalc(class trigger *trig)
+bool output_trigger::recalc(class trigger *trig, bool prev)
 {
   std::vector<class trigger *>::iterator it;
   class trigger *ptr;
@@ -201,18 +202,34 @@ bool output_trigger::recalc(class trigger *trig)
   return false;
 }
 
-bool timer_trigger::recalc(class trigger *trig)
+bool trigger::should_trigger(class trigger *trig, bool prev)
 {
-  if (trig->get_state())
+  if (!this->trig_edge) {
+    return (!trig->get_state() && this->get_state());
+  }
+
+  if (prev && !this->get_state())
+    return !this->trig_val;
+
+  if (!prev && this->get_state());
+    return this->trig_val;
+
+  return false;
+}
+
+bool timer_trigger::recalc(class trigger *trig, bool prev)
+{
+  // return true if our dependency is set and we're level triggered
+  if (trig->get_state() && !this->trig_edge)
     return true;
 
-  if (!trig->get_state() && this->get_state()) {
+  if (should_trigger(trig, prev)) {
     __log("timer_trigger: dep - fire for %lu\n", this->len);
     this->timer.set(this->len);
     return true;
   }
 
-  return false;
+  return this->state;
 }
 
 static void trig_expiry_fn(void *ptr)
@@ -232,7 +249,7 @@ forward_trigger::forward_trigger()
   this->f_on = false;
 }
 
-bool forward_trigger::recalc(class trigger *trig)
+bool forward_trigger::recalc(class trigger *trig, bool prev)
 {
   bool state = trig->get_state();
 

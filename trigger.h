@@ -20,8 +20,8 @@ class trigger {
   char *get_name(void) { return this->name; }
   
   bool depends_on(class trigger *trig);
-  void depend_change(class trigger *trig);
-  
+  void depend_change(class trigger *trig, bool prev);
+ 
   void new_state(bool state);
   bool get_state(void) { return state; };
   bool get_modify(void) { return modified; };
@@ -31,20 +31,27 @@ class trigger {
 
   void (*notify_fn)(class trigger *trig, bool to);
 
+  // edge/vs level triggers (may not work for all triggers //
+  void set_edge(bool to, bool val) { this->trig_edge = to; this->trig_val = val; };
+
   // if we're an input, then this is true, otherwise false
   virtual bool is_input(void) { return false; };
   virtual bool is_output(void) { return false; };
 
   // default is to do nothing
  protected:
+  bool should_trigger(class trigger *trig, bool prev);
+
   virtual void notify(bool to);
-  virtual bool recalc(class trigger *trig) { return false; }
+  virtual bool recalc(class trigger *trig, bool prev) { return false; }
 
   char * name;
   std::vector<trigger *> depends;
   
   bool state;
   bool modified;
+  bool trig_val;      // trigger val (if edge) //
+  bool trig_edge;     // set if trigger on edge //
 };
 
 extern class trigger *trigger_find(const char *name);
@@ -59,27 +66,27 @@ class output_trigger : public trigger {
 public:
   virtual bool is_output(void) { return true; };
 protected:
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 };
 
 class and_trigger : public trigger {
  protected:
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 };
 
 class not_trigger : public trigger {
  protected:
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 };
 
 class or_trigger : public trigger {
  protected:
-  bool recalc(class trigger *trig);  
+  bool recalc(class trigger *trig, bool prev);  
 };
 
 class sr_trigger : public trigger {
  protected:
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 
  public:
   void add_set(class trigger *trig) { set.push_back(trig); add_dependency(trig); };
@@ -98,7 +105,7 @@ class timer_trigger : public trigger {
   unsigned get_length(void) { return this->len; };
 
  protected:
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 
  private:
   unsigned long len;
@@ -116,6 +123,6 @@ public:
   bool f_on, f_off;
   class trigger *target;
 
-  bool recalc(class trigger *trig);
+  bool recalc(class trigger *trig, bool prev);
 };
 
