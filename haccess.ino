@@ -29,16 +29,12 @@
 // mqtt server
 #include <PubSubClient.h>
 
-//#include <vector>
-
-
 // for the display (to be moved out)
 //#include <Adafruit_GFX.h>
 //#include <Adafruit_PCD8544.h>
 
 // Flash settings for the ESP07:
 // QIO, 80MHz, 1M (512K SPIFFS)
-
 
 extern "C" {
 #include "pcd8544.h"
@@ -64,16 +60,20 @@ IniFile cfgfile;
 struct config cfg = {
   .en_rfid = true,
   .en_mqtt = false,
+  .en_cards = false,
+  .en_cards_fetch = false,
   .rfid_interval = 250,
   .wifi_ssid = "Hackspace",
   .wifi_pass = "T3h4x0rZ",
+  .card_host = NULL,
+  .card_url = NULL,
+  .mqtt_server = NULL,
+  .mqtt_port = 1883,
 };
 
 // MQTT state
 WiFiClient mqttWiFi;
 PubSubClient mqtt(mqttWiFi);
-
-const char *mqtt_server;    // copy of servername
 
 // configuration information
 
@@ -98,7 +98,6 @@ class input_trigger in_opto;
 
 class output_trigger out_opto;
 
-
 #if !defined(NFC_ELECHOUSE)
 #define PN_IIC 1
 
@@ -120,8 +119,7 @@ PN532 nfc(pn532i2c);
 
 #endif
 
-
-class UrlWatch *watch_cfg = new UrlWatch("acidburn", 80, "/~ben/haccess/cardlist.txt");
+class UrlWatch *watch_cfg;
 
 void setup_gpioexp(void)
 {
@@ -233,7 +231,6 @@ static void init_nfc(void)
     Serial.println("Device is not PN532?");
   }
 
-
   nfc.setPassiveActivationRetries(1);
   nfc.SAMConfig();
 }
@@ -336,8 +333,7 @@ static void setup_mqtt(void)
     cfg.mqtt_port = 1883;
   }
 
-  mqtt_server = strdup(servname);
-  mqtt.setServer(mqtt_server, port);
+  mqtt.setServer(cfg.mqtt_server, port);
   mqtt.setCallback(mqtt_callback);
 }
 
@@ -664,6 +660,55 @@ static void setup_triggers(void)
   }
 }
 
+char cfgbuff[128];
+
+static char *get_cfg_str(const char *sect, const char *key)
+{
+  char *ret;
+
+  if (!cfgfile.getValue(sect, key, cfgbuff, sizeof(cfgbuff))) {
+    Serial.printf("config: failed to find %s.%s\n", sect, key);
+    return NULL;
+  }
+
+  ret = strdup(cfgbuff);
+  if (!ret) {
+    Serial.printf("ERROR: no memory for %s.%s (%s)\n", sect, key, cfgbuff);
+  }
+
+  return ret;
+}
+
+static void setup_card_list(void)
+{
+  const char *section = "cards";
+  char tmp[128];
+
+  if (!cfgfile.getValue(section, "use", tmp, sizeof(tmp), cfg.en_cards))
+    goto parse_err;
+
+  if (!cfgfile.getValue(section, "fetch", tmp, sizeof(tmp), cfg.en_cards_fetch))
+    goto parse_err;
+
+  if (cfg.en_cards_fetch) {
+    cfg.card_host = get_cfg_str(section, "host");
+    cfg.card_url = get_cfg_str(section, "url");
+    if (!cfg.card_host || !cfg.card_url)
+      goto parse_err;
+
+    watch_cfg = new UrlWatch(cfg.card_host, 80, cfg.card_url);
+    if (!watch_cfg) {
+      Serial.println("no memory for url watch");
+      goto parse_err;
+    }
+  }
+
+  return;
+
+parse_err:
+  Serial.println("ERROR: failed to parse cards section");
+}
+
 void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
@@ -710,6 +755,7 @@ void setup() {
 
   setup_triggers();
 
+  setup_card_list();
   check_card_list();
   process_wdt();
 
@@ -1034,3 +1080,4 @@ void loop() {
 
   timer_sched(curtime);
 }
+
