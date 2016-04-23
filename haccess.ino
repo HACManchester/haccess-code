@@ -62,6 +62,7 @@ struct config cfg = {
   .en_mqtt = false,
   .en_cards = false,
   .en_cards_fetch = false,
+  .en_cards_update = false,
   .rfid_interval = 250,
   .wifi_ssid = "Hackspace",
   .wifi_pass = "T3h4x0rZ",
@@ -683,6 +684,9 @@ static void setup_card_list(void)
     goto parse_err;
 
   if (cfg.en_cards_fetch) {
+    if (!cfgfile.getValue(section, "update", tmp, sizeof(tmp), cfg.en_cards_update));
+      goto parse_err;
+
     cfg.card_host = get_cfg_str(section, "host");
     cfg.card_url = get_cfg_str(section, "url");
     if (!cfg.card_host || !cfg.card_url)
@@ -690,6 +694,8 @@ static void setup_card_list(void)
 
     watch_cfg = new UrlWatch(cfg.card_host, 80, cfg.card_url);
     if (!watch_cfg) {
+      cfg.en_cards_fetch = false;
+      cfg.en_cards_update = false;
       Serial.println("no memory for url watch");
       goto parse_err;
     }
@@ -1049,7 +1055,7 @@ void loop() {
   if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid)
     checkForCard();
 
-  if (timeTo(&lastFile, fileInterval, curtime) && false)
+  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
     checkForNewFiles();
 
   if (timeTo(&lastTimer, 1000, curtime)) {

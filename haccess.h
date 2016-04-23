@@ -31,6 +31,7 @@ struct config {
 
   bool en_cards;
   bool en_cards_fetch;
+  bool en_cards_update;
 
   unsigned int rfid_interval;   /**< RFID poll interval */
 
