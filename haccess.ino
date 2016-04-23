@@ -65,6 +65,8 @@ struct config cfg = {
   .en_rfid = true,
   .en_mqtt = false,
   .rfid_interval = 250,
+  .wifi_ssid = "Hackspace",
+  .wifi_pass = "T3h4x0rZ",
 };
 
 // MQTT state
@@ -74,12 +76,6 @@ PubSubClient mqtt(mqttWiFi);
 const char *mqtt_server;    // copy of servername
 
 // configuration information
-
-const char *ssid_def = "Hackspace";
-const char *pass_def = "T3h4x0rZ";
-
-String ssid = String(ssid_def);
-String pass = String(pass_def);
 
 bool wifi_up = false;
 
@@ -192,19 +188,19 @@ static void read_wifi_config(void)
   r = f.readStringUntil('\n');
   Serial.print("ESSID ");
   Serial.println(r);
-  ssid = r;
+  cfg.wifi_ssid = r.c_str();
 
   r = f.readStringUntil('\n');
   Serial.print("Password ");
   Serial.println(r);
-  pass = r;
+  cfg.wifi_pass = r.c_str();
 
   f.close();
 }
 
 static void start_wifi(void)
 {
-  WiFi.begin(ssid.c_str(), pass.c_str());
+  WiFi.begin(cfg.wifi_ssid, cfg.wifi_pass);
 }
 
 static void show_ids(void)
@@ -505,6 +501,8 @@ static void read_trigger(const char *section)
   if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
     unsigned long exptime;
 
+    // create a timer that then goes and un-sets the given
+    // trigger.
     if (parse_time(tmp, &exptime)) {
       class timer_trigger *tt = new timer_trigger();
       class forward_trigger *ft = new forward_trigger();

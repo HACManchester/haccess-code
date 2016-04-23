@@ -31,6 +31,9 @@ struct config {
 
   unsigned int rfid_interval;   /**< RFID poll interval */
 
+  const char *wifi_ssid;
+  const char *wifi_pass;
+
   char *mqtt_server;
   uint16_t mqtt_port;
 };
