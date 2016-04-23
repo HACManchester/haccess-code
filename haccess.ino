@@ -308,32 +308,24 @@ static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
 static void setup_mqtt(void)
 {
-  char servname[128];
   char tmp[128];
-  uint16_t port;
 
-  if (cfgfile.getValue("mqtt", "server", servname, sizeof(servname))) {
-    // that's ok
-    Serial.println(servname);
-  } else {
-    Serial.println("default mqtt server");
-    sprintf(servname, "acidburn");
+  cfg.mqtt_server = get_cfg_str("mqtt", "server");
+  if (!cfg.mqtt_server) {
+    // todo?
   }
-  cfg.mqtt_server = strdup(servname);
 
   cfgfile.clearError();
-  if (cfgfile.getValue("mqtt", "port", tmp, sizeof(tmp), port)) {
+  if (cfgfile.getValue("mqtt", "port", tmp, sizeof(tmp), cfg.mqtt_port)) {
     // ok
     if (cfgfile.getError() != cfgfile.errorNoError)
       Serial.print("read true, but error?");
-    Serial.print("mqtt port ");
-    Serial.println(port, DEC);
+    Serial.printf("mqtt port %d\n", cfg.mqtt_port);
   } else {
-    Serial.println("default mqtt port");
     cfg.mqtt_port = 1883;
   }
 
-  mqtt.setServer(cfg.mqtt_server, port);
+  mqtt.setServer(cfg.mqtt_server, cfg.mqtt_port);
   mqtt.setCallback(mqtt_callback);
 }
 
