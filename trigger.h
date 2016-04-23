@@ -120,7 +120,8 @@ public:
   void set_target(class trigger *trig) { this->target = trig; };
   void set_filter(bool off, bool on) { this->f_off = off; this->f_on = on; };
  protected:
-  bool f_on, f_off;
+  bool f_on;
+  bool f_off;
   class trigger *target;
 
   bool recalc(class trigger *trig, bool prev);
