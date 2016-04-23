@@ -11,6 +11,11 @@ enum url_result UrlWatch::upToDate(void)
   WiFiClient client;
   String line;
 
+  // if the wifi is not connected, do not try this
+  if (WiFi.status() != WL_CONNECTED) {
+    return URL_FETCH_ERR;
+  }
+
   if (!client.connect(this->host, this->port)) {
     return URL_FETCH_ERR;
   }
