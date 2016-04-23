@@ -1,3 +1,6 @@
+// Simple URL watcher
+// Copyright 2015 Ben Dooks <ben@fluff.org>
+
 
 #include <ESP8266WiFi.h>
 #include "urlwatch.h"
