@@ -811,6 +811,7 @@ static void checkForCard(void)
   uint8_t uid[8] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;  // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
   class CardInfo info;
+  bool known_card = false;
 
   //Serial.println("Reading card");
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
@@ -831,7 +832,8 @@ static void checkForCard(void)
       Serial.println("");
     }
 
-    if (lookupCard(&info, uid, uidLength)) {
+    known_card = lookupCard(&info, uid, uidLength);
+    if (known_card) {
       Serial.println("Found card " + info.logname);
       show_known_card(&info, uid, uidLength);
       card_ok_count = 3;
@@ -839,6 +841,8 @@ static void checkForCard(void)
       Serial.println("Found unknown card");
       show_unknown_card(&info, uid, uidLength);
     }
+
+    mqtt.publish(known_card ? "haccess/knownrfid" : "haccess/unknownrfid", uid, uidLength);
   } else {
     //Serial.println("no card");
   }
