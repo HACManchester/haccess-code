@@ -447,7 +447,7 @@ static bool read_trigger_timer(class timer_trigger *tt, const char *section, cha
 static void read_trigger(const char *section)
 {
   class trigger *trig;
-  char tmp[64];
+  char tmp[96];
   bool bv = false;
 
   Serial.printf("reading trigger '%s'\n", section);
@@ -538,7 +538,7 @@ static class trigger *get_trig(char *name)
 class trigger *cfg_lookup_trigger(const char *section, char *name)
 {
     class trigger *trig;
-    char tmp[64];
+    char tmp[96];
 
     if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
       return NULL;
@@ -550,7 +550,7 @@ static void read_dependency(const char *section)
 {
   class trigger *target = cfg_lookup_trigger(section, "target");
   class trigger *src;
-  char tmp[64];
+  char tmp[96];
   int nr;
 
   if (!target)
