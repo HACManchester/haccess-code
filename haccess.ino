@@ -450,9 +450,13 @@ static void read_trigger(const char *section)
   char tmp[64];
   bool bv = false;
 
-  if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp)))
-    goto parse_err;
+  Serial.printf("reading trigger '%s'\n", section);
 
+  if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp))) {
+    Serial.printf("section %s: failed to get type\n", section);
+    goto parse_err;
+  }
+  
   if (strcmp(tmp, "sr") == 0) {
     trig = new sr_trigger();
   } else if (strcmp(tmp, "or") == 0) {
@@ -469,9 +473,11 @@ static void read_trigger(const char *section)
         goto parse_err;
     }
     trig = tt;
-  } else
+  } else {
+    Serial.printf("section %s: failed type of '%s'\n", section, tmp);
     goto parse_err;
-
+  }
+  
   if (!trig) {
     Serial.printf("no memory for trigger\n");
     return;
@@ -559,7 +565,7 @@ static String get_section(String line)
   int end = line.indexOf(']');
 
   if (end > 1)
-    return line.substring(1, end-1);
+    return line.substring(1, end-1+1);
   return "";
 }
 
@@ -569,10 +575,14 @@ static void read_triggers(void)
   String line;
   uint32_t pos = 0;
 
+  Serial.println("reading trigger list");
+
   if (!f)
     return;
 
   while (true) {
+    //Serial.printf("- pos %u\n", pos);
+
     if (!f.seek(pos, SeekSet)) {
       Serial.println("read_triggers: failed seek\n");
       break;
@@ -587,7 +597,7 @@ static void read_triggers(void)
       String section = get_section(line);
       read_trigger(section.c_str());
     }
-    pos += line.length();
+    pos += line.length() + 1;
   }
 }
 
@@ -596,6 +606,8 @@ static void read_depends(void)
   File f = cfg_file;
   String line;
   uint32_t pos = 0;
+
+  Serial.println("reading dependency info");
 
   if (!f)
     return;
@@ -613,7 +625,7 @@ static void read_depends(void)
       String section = get_section(line);
       read_dependency(section.c_str());
     }
-    pos += line.length();
+    pos += line.length() + 1;
   }
 }
 
@@ -631,6 +643,8 @@ static void dump_trigger(class trigger *trig)
 
 static void setup_triggers(void)
 {
+  Serial.println("setting up triggers");
+
   in_rfid.set_name("input/rfid");
   in_rfid_auth.set_name("input/rfid/auth");
 
@@ -645,6 +659,7 @@ static void setup_triggers(void)
    * unique section names, we need to work through until weve read all
    * the lines */
 
+  Serial.println("reading triggers");
   read_triggers();
   read_depends();
 
@@ -711,6 +726,8 @@ void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
 
+  twi_setClockStretchLimit(3000);
+
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
   pinMode(13, OUTPUT);
@@ -740,14 +757,20 @@ void setup() {
   fs_opened = SPIFFS.begin();
   if (!fs_opened) {
     Serial.println("Failed to open SPIflash");
+  } else {
+    Serial.println("SPIFFS started");
   }
 
+  Serial.println("open config file");
   open_config_file();
+  Serial.println("start wdt");
   process_wdt();
 
+  Serial.println("wifi startup");
   read_wifi_config();
   start_wifi();
 
+  Serial.println("preparing mqtt");
   setup_mqtt();
   init_nfc();
 
@@ -1056,8 +1079,10 @@ void loop() {
 
   curtime = millis();
 
-  if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid)
+  if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid) {
+    //Serial.println("card check");
     checkForCard();
+  }
 
   if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
     checkForNewFiles();
