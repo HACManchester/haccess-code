@@ -15,6 +15,7 @@
 
 #if !defined(NFC_ELECHOUSE)
 // nfc library
+#error "don't use this"
 #include <Adafruit_PN532.h>
 
 #else
@@ -210,7 +211,7 @@ static void show_ids(void)
   Serial.println(ESP.getSdkVersion());
   Serial.print("ESP Boot version ");
   Serial.println(ESP.getBootVersion());
-  Serial.print("Free heap size");
+  Serial.print("Free heap size ");
   Serial.println(ESP.getFreeHeap());
 }
 
@@ -344,7 +345,7 @@ static void open_config_file(void)
   cfgfile.setFile(cfg);
 }
 
-static bool config_wdt = true;
+static bool config_wdt = false;
 
 #define WDT_ADDR  (0x50)
 
@@ -412,8 +413,10 @@ static void read_dependency_srcs(class trigger *target, const char *section, cha
 {
   class trigger *src;
   char name[20];
-  char tmp[64];
+  char tmp[96];
   int nr;
+
+  Serial.printf("%s: reading dep-src\n", section);
 
   for (nr = 0; nr < 99; nr++) {
     sprintf(tmp, "%s%d", pfx, nr);
@@ -465,7 +468,9 @@ static void read_trigger(const char *section)
     trig = new and_trigger();
   } else if (strcmp(tmp, "not") == 0) {
     trig = new not_trigger();
-  } else if (strcmp(tmp, "timer") == 0) {
+  } else if (strcmp(tmp, "input") == 0) {
+    trig = new input_trigger();
+  } else if (strcmp(tmp, "timer") == 0 && false) {
     class timer_trigger *tt = new timer_trigger();
 
     if (tt) {
@@ -485,11 +490,19 @@ static void read_trigger(const char *section)
 
   // do any standard trigger parsing that's common to all triggers
 
+  if (cfgfile.getValue(section, "name", tmp, sizeof(tmp))) {
+    char *newname = strdup(tmp);
+    if (newname)
+      trig->set_name(newname);
+  }
+
   if (cfgfile.getValue(section, "default", tmp, sizeof(tmp), bv)) {
+    Serial.printf("%s: default %d\n", section, bv);
     trig->new_state(bv);
   }
 
   if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
+    Serial.printf("%s: topic '%s'\n", section, tmp);
     // todo - attach to the mqtt handler?
   }
 
@@ -498,20 +511,22 @@ static void read_trigger(const char *section)
 
     // create a timer that then goes and un-sets the given
     // trigger.
-    if (parse_time(tmp, &exptime)) {
+    if (parse_time(tmp, &exptime) && false) {
       class timer_trigger *tt = new timer_trigger();
       class forward_trigger *ft = new forward_trigger();
+
+      Serial.printf("%s: expiry %ld ms\n", section, exptime);
 
       if (!tt || !ft)
         goto parse_err;
 
       tt->set_name("internal");
+      ft->set_name("internal");
       tt->set_length(exptime);
       tt->set_edge(true, true);
-      tt->add_dependency(trig);
-      ft->set_name("internal");
-      ft->add_dependency(tt);
-      ft->set_target(trig);
+      //tt->add_dependency(trig);  // todo - fix this it crashes     
+      //ft->add_dependency(tt);
+      //ft->set_target(trig);
     } else {
       goto parse_err;
     }
@@ -725,8 +740,9 @@ parse_err:
 void setup() {
   Wire.begin(4, 5);
   Serial.begin(115200);
+  Serial.println("ESP8266 Haccess node");
 
-  twi_setClockStretchLimit(3000);
+  //twi_setClockStretchLimit(3000);
 
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
@@ -788,6 +804,8 @@ void setup() {
 
   Serial.print("WiFi connected, IP ");
   Serial.println(WiFi.localIP());
+
+  Serial.printf("Setup done, free heap size %d\n", ESP.getFreeHeap());
 }
 
 
