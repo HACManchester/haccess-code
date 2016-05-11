@@ -742,7 +742,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("ESP8266 Haccess node");
 
-  //twi_setClockStretchLimit(3000);
+  //twi_setClockStretchLimit(30000);
 
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
@@ -1102,7 +1102,7 @@ void loop() {
     checkForCard();
   }
 
-  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
+  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update && false)
     checkForNewFiles();
 
   if (timeTo(&lastTimer, 1000, curtime)) {
