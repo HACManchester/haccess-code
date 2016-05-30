@@ -4,13 +4,16 @@
 
 CXXFLAGS=-O2 -Wall -I../ -std=c++1z -D__TEST
 
-all: triggers triggers2
+all: triggers triggers2 testbench1
+
+testbench1: trigger.o timer.o
+	g++ -lrt -o $@ $^
 
 triggers2: trigger.o  timer.o test-trigger2.o
-	g++ -lrt -o triggers2  timer.o trigger.o test-trigger2.o
+	g++ -lrt -o triggers2 $^
 
 triggers: trigger.o timer.o test-trigger.o
-	g++ -o triggers timer.o trigger.o test-trigger.o
+	g++ -o triggers $^
 
 timer.o:	../timer.h
 timer.o:	../timer.cpp
