@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <time.h>
 
+#include "millis.h"
+
 //#include <readline/readline.h>
 //#include <readline/history.h>
 
@@ -197,23 +199,6 @@ static int process_set(int argc, char **args)
   
   trig->new_state(state);  
   return 0;
-}
-
-#define CLOCKID CLOCK_REALTIME
-#define SIG SIGRTMIN
-
-unsigned long millis(void)
-{
-  struct timespec ts;
-  int ret;
-
-  ret = clock_gettime(CLOCK_REALTIME_COARSE, &ts);
-  if (ret != 0) {
-    perror("clock_gettime");
-    exit(5);
-  }
-
-  return (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
 }
 
 static void errExit(const char *msg)
