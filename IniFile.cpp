@@ -1,4 +1,6 @@
+#ifndef __TEST
 #include <ESP8266WiFi.h>
+#endif
 //#include <ESP8266WebServer.h>
 
 #include <string.h>
