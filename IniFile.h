@@ -148,7 +148,9 @@ bool IniFile::open(void)
     _error = errorFileNotFound;
     return false;
   }
-#endif  
+#endif
+  _error = errorNoError;
+  return true;
 }
 
 void IniFile::close(void)
