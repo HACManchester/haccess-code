@@ -3,6 +3,7 @@
 
 #include "trigger.h"
 #include "timer.h"
+#include "trigger_config.h"
 
 #include <ESP8266WiFi.h>
 #include "FS.h"
@@ -11,11 +12,11 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#define NFC_ELECHOUSE
+//#define NFC_ELECHOUSE
 
 #if !defined(NFC_ELECHOUSE)
 // nfc library
-#error "don't use this"
+//#error "don't use this"
 #include <Adafruit_PN532.h>
 
 #else
@@ -28,7 +29,7 @@
 #include <ESP8266WebServer.h>
 
 // mqtt server
-#include <PubSubClient.h>
+/., lude <PubSubClient.h>
 
 // for the display (to be moved out)
 //#include <Adafruit_GFX.h>
@@ -36,6 +37,7 @@
 
 // Flash settings for the ESP07:
 // QIO, 80MHz, 1M (512K SPIFFS)
+// note, trying 40MHz QIO
 
 extern "C" {
 #include "pcd8544.h"
@@ -89,16 +91,6 @@ bool dbg_showCardRead = true;
 unsigned button_count;
 unsigned detect_count;
 
-// triggers
-
-class input_trigger in_rfid;
-class input_trigger in_rfid_auth;
-
-class input_trigger in_button1;
-class input_trigger in_button2;
-class input_trigger in_opto;
-
-class output_trigger out_opto;
 
 #if !defined(NFC_ELECHOUSE)
 #define PN_IIC 1
@@ -107,7 +99,7 @@ class output_trigger out_opto;
 // instantiate the card reader module
 #ifdef PN_IIC
 // changed adafruit library to ignore reset and irq
-Adafruit_PN532 nfc(-1, -1);
+Adafruit_PN532 nfc(-1, 12);
 #else
 Adafruit_PN532 nfc(14, 12, 13, 16);
 #endif
@@ -360,328 +352,8 @@ static void process_wdt(void)
   Wire.endTransmission();
 }
 
-/*
-// look for a time-specification, in text format and return time in millis
-// for example:
-// 10c  => 10 centi-seconds
-/  10s  => 10 seconds
-// 10m  => 10 minutes
-// 10h  => 10 hours
-// is it worth having days in here?
-*/
 
-static bool parse_time(char *buff, unsigned long *result)
-{
-  unsigned long tmp;
-  char *ep = NULL;
 
-  tmp = strtoul(buff, &ep, 10);
-  if (ep == buff)
-    return false;
-
-  *result = tmp;
-  if (ep[0] < 32)
-    return true;
-
-  switch (ep[0]) {
-    case 's':
-      tmp *= 1000;
-      break;
-
-    case 'm':
-      if (ep[1] != 's')
-        tmp *= 1000 * 60;
-      break;
-
-    case 'c':
-      tmp *= 10;
-      break;
-
-    case 'h':
-      tmp *= 1000 * 60 * 60;
-      break;
-
-    default:
-      return false;
-  }
-
-  *result = tmp;
-  return true;
-}
-
-static void read_dependency_srcs(class trigger *target, const char *section, char *pfx)
-{
-  class trigger *src;
-  char name[20];
-  char tmp[96];
-  int nr;
-
-  Serial.printf("%s: reading dep-src\n", section);
-
-  for (nr = 0; nr < 99; nr++) {
-    sprintf(tmp, "%s%d", pfx, nr);
-    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
-      break;
-
-
-    src = get_trig(tmp);
-    if (src) {
-      target->add_dependency(src);
-    }
-  }
-}
-
-static bool read_trigger_timer(class timer_trigger *tt, const char *section, char *buff, int buff_sz)
-{
-  unsigned long time;
-
-  tt->set_length(1000UL);   // default is 1sec
-
-  if (cfgfile.getValue(section, "time", buff, buff_sz)) {
-    if (!parse_time(buff, &time))
-      return false;
-
-    tt->set_length(time);
-  }
-
-  return true;
-}
-
-static void read_trigger(const char *section)
-{
-  class trigger *trig;
-  char tmp[96];
-  bool bv = false;
-
-  Serial.printf("reading trigger '%s'\n", section);
-
-  if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp))) {
-    Serial.printf("section %s: failed to get type\n", section);
-    goto parse_err;
-  }
-  
-  if (strcmp(tmp, "sr") == 0) {
-    trig = new sr_trigger();
-  } else if (strcmp(tmp, "or") == 0) {
-    trig = new or_trigger();
-  } else if (strcmp(tmp, "and") == 0) {
-    trig = new and_trigger();
-  } else if (strcmp(tmp, "not") == 0) {
-    trig = new not_trigger();
-  } else if (strcmp(tmp, "input") == 0) {
-    trig = new input_trigger();
-  } else if (strcmp(tmp, "timer") == 0 && false) {
-    class timer_trigger *tt = new timer_trigger();
-
-    if (tt) {
-      if (!read_trigger_timer(tt, section, tmp, sizeof(tmp)))
-        goto parse_err;
-    }
-    trig = tt;
-  } else {
-    Serial.printf("section %s: failed type of '%s'\n", section, tmp);
-    goto parse_err;
-  }
-  
-  if (!trig) {
-    Serial.printf("no memory for trigger\n");
-    return;
-  }
-
-  // do any standard trigger parsing that's common to all triggers
-
-  if (cfgfile.getValue(section, "name", tmp, sizeof(tmp))) {
-    char *newname = strdup(tmp);
-    if (newname)
-      trig->set_name(newname);
-  }
-
-  if (cfgfile.getValue(section, "default", tmp, sizeof(tmp), bv)) {
-    Serial.printf("%s: default %d\n", section, bv);
-    trig->new_state(bv);
-  }
-
-  if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
-    Serial.printf("%s: topic '%s'\n", section, tmp);
-    // todo - attach to the mqtt handler?
-  }
-
-  if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
-    unsigned long exptime;
-
-    // create a timer that then goes and un-sets the given
-    // trigger.
-    if (parse_time(tmp, &exptime) && false) {
-      class timer_trigger *tt = new timer_trigger();
-      class forward_trigger *ft = new forward_trigger();
-
-      Serial.printf("%s: expiry %ld ms\n", section, exptime);
-
-      if (!tt || !ft)
-        goto parse_err;
-
-      tt->set_name("internal");
-      ft->set_name("internal");
-      tt->set_length(exptime);
-      tt->set_edge(true, true);
-      //tt->add_dependency(trig);  // todo - fix this it crashes     
-      //ft->add_dependency(tt);
-      //ft->set_target(trig);
-    } else {
-      goto parse_err;
-    }
-  }
-
-  // note, dependency information can be handled elsewhere
-  read_dependency_srcs(trig, section, "source");
-
-  return;
-
-parse_err:
-  Serial.printf("failed parsing '%s'\n", section);
-}
-
-static class trigger *get_trig(char *name)
-{
-    class trigger *trig = trigger_find(name);
-
-    if (!trig)
-      Serial.printf("ERROR: failed to find '%s'\n", name);
-    return trig;
-}
-
-class trigger *cfg_lookup_trigger(const char *section, char *name)
-{
-    class trigger *trig;
-    char tmp[96];
-
-    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
-      return NULL;
-
-    return get_trig(tmp);
-}
-
-static void read_dependency(const char *section)
-{
-  class trigger *target = cfg_lookup_trigger(section, "target");
-  class trigger *src;
-  char tmp[96];
-  int nr;
-
-  if (!target)
-    return;
-
-  read_dependency_srcs(target, section, "source");
-  // todo - if set/reset, add set/reset dependencies
-}
-
-static String get_section(String line)
-{
-  int end = line.indexOf(']');
-
-  if (end > 1)
-    return line.substring(1, end-1+1);
-  return "";
-}
-
-static void read_triggers(void)
-{
-  File f = cfg_file;
-  String line;
-  uint32_t pos = 0;
-
-  Serial.println("reading trigger list");
-
-  if (!f)
-    return;
-
-  while (true) {
-    //Serial.printf("- pos %u\n", pos);
-
-    if (!f.seek(pos, SeekSet)) {
-      Serial.println("read_triggers: failed seek\n");
-      break;
-    }
-
-    line = f.readStringUntil('\n');
-    // is line null if this fails?
-
-    if (line.startsWith("[logic") ||
-        line.startsWith("[input") ||
-        line.startsWith("[output")) {
-      String section = get_section(line);
-      read_trigger(section.c_str());
-    }
-    pos += line.length() + 1;
-  }
-}
-
-static void read_depends(void)
-{
-  File f = cfg_file;
-  String line;
-  uint32_t pos = 0;
-
-  Serial.println("reading dependency info");
-
-  if (!f)
-    return;
-
-  while (true) {
-    if (!f.seek(pos, SeekSet)) {
-      Serial.println("read_triggers: failed seek\n");
-      break;
-    }
-
-    line = f.readStringUntil('\n');
-    // is line null if this fails?
-
-    if (line.startsWith("[dependency")) {
-      String section = get_section(line);
-      read_dependency(section.c_str());
-    }
-    pos += line.length() + 1;
-  }
-}
-
-static void dump_trig_dep(class trigger *trig)
-{
-  Serial.printf(" Dep %s: %d\n", trig->get_name(), trig->get_state());
-}
-
-static void dump_trigger(class trigger *trig)
-{
-  Serial.printf("Trigger %s: %d\n", trig->get_name(), trig->get_state());
-  trig->run_depends(dump_trig_dep);
-  Serial.println("");
-}
-
-static void setup_triggers(void)
-{
-  Serial.println("setting up triggers");
-
-  in_rfid.set_name("input/rfid");
-  in_rfid_auth.set_name("input/rfid/auth");
-
-  in_button1.set_name("input/button1");
-  in_button2.set_name("input/button2");
-  in_opto.set_name("input/opto");
-
-  out_opto.set_name("output/opto");
-  // todo - set output actions.
-
-  /* we run through the configuration files in several passes. As we need
-   * unique section names, we need to work through until weve read all
-   * the lines */
-
-  Serial.println("reading triggers");
-  read_triggers();
-  read_depends();
-
-  if (true) {
-    trigger_run_all(dump_trigger);
-  }
-}
 
 char cfgbuff[128];
 
@@ -806,6 +478,16 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   Serial.printf("Setup done, free heap size %d\n", ESP.getFreeHeap());
+
+#define dump_cfg(__cfg) Serial.printf("CFG: %s = %d\n", #__cfg, cfg.__cfg)
+  if (true) {
+    dump_cfg(en_rfid);
+    dump_cfg(en_mqtt);
+    dump_cfg(en_cards);
+    dump_cfg(en_cards_fetch);
+    dump_cfg(en_cards_update);
+    dump_cfg(rfid_interval);
+  }
 }
 
 
@@ -856,7 +538,7 @@ static void checkForCard(void)
 
   //Serial.println("Reading card");
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
-  //Serial.println("Read card");mq
+  //Serial.println("Read card");
 
   if (success) {
     detect_count = 5;
@@ -1058,7 +740,7 @@ static bool mqtt_known = false;
 
 static void processMqtt(void)
 {
-  if (true)
+  if (!cfg.en_mqtt)
     return;
 
   if (!mqtt.connected()) {
@@ -1102,7 +784,7 @@ void loop() {
     checkForCard();
   }
 
-  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update && false)
+  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
     checkForNewFiles();
 
   if (timeTo(&lastTimer, 1000, curtime)) {
