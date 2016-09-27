@@ -1,0 +1,2 @@
+
+#define PSTR(s) (s)
