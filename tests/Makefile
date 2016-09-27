@@ -10,7 +10,7 @@ CXXFLAGS=-O2 -Wall -I../ -I`pwd` -include Serial.h -include $(ARDUINO)/WString.h
 
 all: triggers triggers2 testbench1
 
-testbench1: testbench1.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o
+testbench1: testbench1.o config.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o
 	g++ -lrt -o $@ $^
 
 triggers2: trigger.o  timer.o test-trigger2.o millis.o
@@ -26,6 +26,10 @@ clean:
 	-rm *.o
 
 # code from upper level project
+
+config.o:	../config.h
+config.o:	../config.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 timer.o:	../timer.h
 timer.o:	../timer.cpp

@@ -47,33 +47,16 @@ extern "C" {
 // the reset line is set to gpio expander
 //Adafruit_PCD8544 display = Adafruit_PCD8544(14, 13, -1, 0, -2);
 
-// local includes
-#include "haccess.h"
-#include "cards.h"
-#include "gpioexp.h"
-#include "urlwatch.h"
-
 // IniFile library
 #include "IniFile.h"
 
-// configuration file
-File cfg_file;
-IniFile cfgfile;
+// local includes
+#include "haccess.h"
+#include "cards.h"
+#include "config.h"
+#include "gpioexp.h"
+#include "urlwatch.h"
 
-struct config cfg = {
-  .en_rfid = true,
-  .en_mqtt = false,
-  .en_cards = false,
-  .en_cards_fetch = false,
-  .en_cards_update = false,
-  .rfid_interval = 250,
-  .wifi_ssid = "Hackspace",
-  .wifi_pass = "T3h4x0rZ",
-  .card_host = NULL,
-  .card_url = NULL,
-  .mqtt_server = NULL,
-  .mqtt_port = 1883,
-};
 
 // MQTT state
 WiFiClient mqttWiFi;
@@ -333,8 +316,7 @@ static void open_config_file(void)
     return;
   }
 
-  cfg_file = cfg;
-  cfgfile.setFile(cfg);
+  set_config_file(cfg);
 }
 
 static bool config_wdt = false;
