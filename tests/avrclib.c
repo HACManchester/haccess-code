@@ -17,10 +17,10 @@ char *ltoa (long val, char *s, int radix)
 {
   switch (radix) {
   case 10:
-    snprintf(s, "%d", val);
+    sprintf(s, "%d", val);
     return s;
   case 16:
-    snprntf(s, "%x", val);
+    sprintf(s, "%x", val);
     return s;
   }
   
@@ -37,10 +37,10 @@ char *ultoa (unsigned long val, char *s, int radix)
 {
   switch (radix) {
   case 10:
-    snprintf(s, "%lu", val);
+    sprintf(s, "%lu", val);
     return s;
   case 16:
-    snpirntf(s, "%lx", val);
+    sprintf(s, "%lx", val);
     return s;
   }
 
