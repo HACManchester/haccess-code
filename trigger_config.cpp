@@ -8,6 +8,15 @@
 #include "trigger.h"
 #include "trigger_config.h"
 
+#ifdef __TEST
+#include <stdio.h>
+#define __log(...) printf(__VA_ARGS__)
+#else
+#define __log(...) do { } while(0)
+//#define __log (NULL)
+#endif
+
+
 // triggers
 
 class input_trigger in_rfid;
@@ -70,6 +79,7 @@ static bool parse_time(char *buff, unsigned long *result)
       break;
 
     default:
+      __log("ERR: failed to parse time '%s'\n", buff);
       return false;
   }
 
@@ -105,8 +115,10 @@ static bool read_trigger_timer(class timer_trigger *tt, const char *section, cha
   tt->set_length(1000UL);   // default is 1sec
 
   if (cfgfile.getValue(section, "time", buff, buff_sz)) {
-    if (!parse_time(buff, &time))
+    if (!parse_time(buff, &time)) {
+      __log("ERR: failed to parse time\n");
       return false;
+    }
 
     tt->set_length(time);
   }
@@ -121,7 +133,8 @@ static void read_trigger(const char *section)
   bool bv = false;
 
   Serial.printf("reading trigger '%s'\n", section);
-
+  __log("DBG: reading trigger '%s'\n", section);
+  
   if (!cfgfile.getValue(section, "type", tmp, sizeof(tmp))) {
     Serial.printf("section %s: failed to get type\n", section);
     goto parse_err;
@@ -137,7 +150,7 @@ static void read_trigger(const char *section)
     trig = new not_trigger();
   } else if (strcmp(tmp, "input") == 0) {
     trig = new input_trigger();
-  } else if (strcmp(tmp, "timer") == 0 && false) {
+  } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
 
     if (tt) {
