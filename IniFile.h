@@ -10,7 +10,11 @@
 #define FILE_WRITE (2)
 
 //#include "Ethernet.h"
-#include <FS.h> 
+#ifdef __TEST
+#include "FS.h"
+#else
+#include <FS.h>
+#endif
 #include <stdint.h>
 
 class IniFileState;
