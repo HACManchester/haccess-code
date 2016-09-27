@@ -16,6 +16,10 @@
 
 int main(int argc, char **argv)
 {
+  File f = File("../data/config.ini");
+
+  set_config_file(f);
 
 
+  return 0;
 }

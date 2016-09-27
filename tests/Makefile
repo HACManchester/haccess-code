@@ -6,11 +6,13 @@
 ARDUINO=~/arduino-1.6.11/hardware/arduino/avr/cores/arduino
 
 # We add our own Serial.h for Serial class support
-CXXFLAGS=-O2 -Wall -I../ -I`pwd` -include Serial.h -include $(ARDUINO)/WString.h -std=c++1z -D__TEST -DString=string
+CXXFLAGS=-O2 -Wall -I../ -I`pwd` -include Serial.h -include $(ARDUINO)/WString.h -std=c++1z -D__TEST
+
+CFLAGS=-O2 -Wall
 
 all: triggers triggers2 testbench1
 
-testbench1: testbench1.o config.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o
+testbench1: testbench1.o config.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o csupport.o
 	g++ -lrt -o $@ $^
 
 triggers2: trigger.o  timer.o test-trigger2.o millis.o
