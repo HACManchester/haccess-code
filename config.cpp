@@ -2,15 +2,15 @@
 #include "FS.h"
 #include "IniFile.h"
 
+#include "haccess.h"
 #include "config.h"
+
 
 // configuration file
 File cfg_file;
 IniFile cfgfile;
 
-
-
-
+// main configuration info
 struct config cfg = {
   .en_rfid = true,
   .en_mqtt = false,
