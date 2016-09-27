@@ -19,10 +19,13 @@ enum SeekMode {
 
 class File {
   //std::fstream stream;
+ protected:
+  int fd;
   
  public:
   File() { }
   ~File() { }
+  File(char *fname);
 
   size_t read(uint8_t *buf, size_t size);
   bool seek(uint32_t pos, SeekMode mode);
