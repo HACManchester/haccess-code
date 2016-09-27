@@ -174,11 +174,13 @@ static void read_trigger(const char *section)
     char *newname = strdup(tmp);
     if (newname)
       trig->set_name(newname);
+    __log("DBG: trigger name set to '%s'\n", newname);
   }
 
   if (cfgfile.getValue(section, "default", tmp, sizeof(tmp), bv)) {
     Serial.printf("%s: default %d\n", section, bv);
     trig->new_state(bv);
+    __log("DBG: trigger name set to '%s'\n", bv ? "on" : "off");
   }
 
   if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
@@ -191,7 +193,7 @@ static void read_trigger(const char *section)
 
     // create a timer that then goes and un-sets the given
     // trigger.
-    if (parse_time(tmp, &exptime) && false) {
+    if (parse_time(tmp, &exptime)) {
       class timer_trigger *tt = new timer_trigger();
       class forward_trigger *ft = new forward_trigger();
 
@@ -208,6 +210,7 @@ static void read_trigger(const char *section)
       //ft->add_dependency(tt);
       //ft->set_target(trig);
     } else {
+      __log("DBG: failed to parse expiry\n");
       goto parse_err;
     }
   }
