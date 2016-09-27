@@ -1,11 +1,12 @@
 // Haccess trigger configuration functions
 
-#include "trigger.h"
-#include "trigger_config.h"
-
 #include "IniFile.h"
 
 #include "FS.h"
+
+#include "haccess.h"
+#include "trigger.h"
+#include "trigger_config.h"
 
 // triggers
 
@@ -17,6 +18,15 @@ class input_trigger in_button2;
 class input_trigger in_opto;
 
 class output_trigger out_opto;
+
+static class trigger *get_trig(char *name)
+{
+    class trigger *trig = trigger_find(name);
+
+    if (!trig)
+      Serial.printf("ERROR: failed to find '%s'\n", name);
+    return trig;
+}
 
 /*
 // look for a time-specification, in text format and return time in millis
@@ -198,19 +208,9 @@ parse_err:
   Serial.printf("failed parsing '%s'\n", section);
 }
 
-
-static class trigger *get_trig(char *name)
-{
-    class trigger *trig = trigger_find(name);
-
-    if (!trig)
-      Serial.printf("ERROR: failed to find '%s'\n", name);
-    return trig;
-}
-
 class trigger *cfg_lookup_trigger(const char *section, char *name)
 {
-    class trigger *trig;
+  //class trigger *trig;
     char tmp[96];
 
     if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
@@ -222,9 +222,7 @@ class trigger *cfg_lookup_trigger(const char *section, char *name)
 static void read_dependency(const char *section)
 {
   class trigger *target = cfg_lookup_trigger(section, "target");
-  class trigger *src;
-  char tmp[96];
-  int nr;
+  //class trigger *src;
 
   if (!target)
     return;

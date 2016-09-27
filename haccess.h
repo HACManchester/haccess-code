@@ -45,3 +45,5 @@ struct config {
   uint16_t mqtt_port;
 };
 
+extern IniFile cfgfile;
+extern File cfg_file;
