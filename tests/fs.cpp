@@ -53,8 +53,10 @@ int File::available(void)
   return 0;
 }
 
+extern "C" void c_close(int fd);
 void File::close(void)
 {
+  c_close(this->fd);
 }
 
 String File::readStringUntil(char ch)
