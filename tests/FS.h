@@ -21,6 +21,7 @@ class File {
   //std::fstream stream;
  protected:
   int fd;
+  off_t end;
   
  public:
   File() { }
@@ -35,7 +36,6 @@ class File {
   void close();
 
   String readStringUntil(char ch);
-  
   operator bool();
 };
 

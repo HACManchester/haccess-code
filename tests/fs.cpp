@@ -16,6 +16,17 @@ using namespace fs;
 File::File(char *fname)
 {
   this->fd = open(fname, O_RDWR);
+
+  this->end = lseek(this->fd, 0, SEEK_END);
+  lseek(this->fd, 0, SEEK_SET);
+}
+
+int File::available(void)
+{
+  off_t off;
+
+  off = lseek(this->fd, 0, SEEK_CUR);
+  return this->end - off;
 }
 
 
@@ -48,11 +59,6 @@ size_t File::read(uint8_t *buf, size_t sz)
   return c_read(this->fd, (void *)buf, sz);
 }
 
-int File::available(void)
-{
-  return 0;
-}
-
 extern "C" void c_close(int fd);
 void File::close(void)
 {
@@ -67,8 +73,14 @@ String File::readStringUntil(char ch)
 
   for (ptr = 0; ptr < MAX_BUFFER_SIZE-1; ptr++) {
     rd = read((uint8_t*)buff+ptr, sizeof(char));
-    if (rd <= 0)
-      break;
+    if (rd <= 0) {
+      if (ptr == 0) {
+	return String("");
+      }
+      else
+	break;
+    }
+
     if (buff[ptr] == ch)
       break;
   }
