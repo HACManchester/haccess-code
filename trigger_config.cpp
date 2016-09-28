@@ -151,7 +151,11 @@ static void read_trigger(const char *section)
   } else if (strcmp(tmp, "not") == 0) {
     trig = new not_trigger();
   } else if (strcmp(tmp, "input") == 0) {
+    // todo - check if we already have it registred
     trig = new input_trigger();
+  } else if (strcmp(tmp, "mqtt_out") == 0) {
+    // todo - check if we already have it registed
+    trig = new output_trigger();
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
 
