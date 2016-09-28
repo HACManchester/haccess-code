@@ -63,11 +63,11 @@ String File::readStringUntil(char ch)
 {
   char buff[MAX_BUFFER_SIZE];
   int ptr;
-  int rd;
+  ssize_t rd;
 
   for (ptr = 0; ptr < MAX_BUFFER_SIZE-1; ptr++) {
     rd = read((uint8_t*)buff+ptr, sizeof(char));
-    if (rd < 0)
+    if (rd <= 0)
       break;
     if (buff[ptr] == ch)
       break;
