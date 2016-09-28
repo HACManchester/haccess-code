@@ -19,14 +19,12 @@
 
 // triggers
 
-class input_trigger in_rfid;
-class input_trigger in_rfid_auth;
-
-class input_trigger in_button1;
-class input_trigger in_button2;
-class input_trigger in_opto;
-
-class output_trigger out_opto;
+class input_trigger *in_rfid;
+class input_trigger *in_rfid_auth;
+class input_trigger *in_button1;
+class input_trigger *in_button2;
+class input_trigger *in_opto;
+class output_trigger *out_opto;
 
 static class trigger *get_trig(char *name)
 {
@@ -96,16 +94,21 @@ static void read_dependency_srcs(class trigger *target, const char *section, cha
 
   Serial.printf("%s: reading dep-src\n", section);
 
-  for (nr = 0; nr < 99; nr++) {
-    sprintf(tmp, "%s%d", pfx, nr);
+  for (nr = 1; nr < 99; nr++) {
+    sprintf(name, "%s%d", pfx, nr);
     if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
       break;
 
+    __log("DBG: section %s: %s => %p\n", section, tmp, src);
     src = get_trig(tmp);
     if (src) {
       target->add_dependency(src);
+    } else {
+      __log("ERR: no trigger for '%s'\n", tmp);
     }
   }
+
+  __log("%s: dependency sources done\n", section);
 }
 
 static bool read_trigger_timer(class timer_trigger *tt, const char *section, char *buff, int buff_sz)
@@ -155,6 +158,7 @@ static void read_trigger(const char *section)
     trig = new input_trigger();
   } else if (strcmp(tmp, "mqtt_out") == 0) {
     // todo - check if we already have it registed
+    // todo - link this to mqtt topic, etc.
     trig = new output_trigger();
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
@@ -210,11 +214,11 @@ static void read_trigger(const char *section)
       if (!tt || !ft)
         goto parse_err;
 
-      tt->set_name("internal");
-      ft->set_name("internal");
+      tt->set_name("internal/timer");
+      ft->set_name("internal/forward");
       tt->set_length(exptime);
       tt->set_edge(true, true);
-      //tt->add_dependency(trig);  // todo - fix this it crashes     
+      tt->add_dependency(trig);  // todo - fix this it crashes     
       //ft->add_dependency(tt);
       //ft->set_target(trig);
     } else {
@@ -248,8 +252,10 @@ static void read_dependency(const char *section)
   class trigger *target = cfg_lookup_trigger(section, "target");
   //class trigger *src;
 
-  if (!target)
+  if (!target) {
+    __log("DBG: no dependency target for '%s'\n", section);
     return;
+  }
 
   read_dependency_srcs(target, section, "source");
   // todo - if set/reset, add set/reset dependencies
@@ -275,7 +281,9 @@ static void read_triggers(void)
   if (!f)
     return;
 
-  while (true) {
+  __log("DBG: %s: f.available=%d\n", __func__, f.available());
+  while (f.available()) {
+    __log("DBG: read_triggers: position %u\n", pos);
     //Serial.printf("- pos %u\n", pos);
 
     if (!f.seek(pos, SeekSet)) {
@@ -287,7 +295,7 @@ static void read_triggers(void)
     if (!line)
       break;
     // is line null if this fails?
-
+    
     if (line.startsWith("[logic") ||
         line.startsWith("[input") ||
         line.startsWith("[output")) {
@@ -315,11 +323,16 @@ static void read_depends(void)
       break;
     }
 
+    if (f.available() <= 0)
+      break;
+    
     line = f.readStringUntil('\n');
-    // is line null if this fails?
-
+    if (!line)
+      break;
+ 
     if (line.startsWith("[dependency")) {
       String section = get_section(line);
+      __log("DBG: found depdency section '%s'\n", section.c_str());
       read_dependency(section.c_str());
     }
     pos += line.length() + 1;
@@ -342,15 +355,27 @@ void setup_triggers(void)
 {
   Serial.println("setting up triggers");
 
-  in_rfid.set_name("input/rfid");
-  in_rfid_auth.set_name("input/rfid/auth");
+  in_rfid = new input_trigger();
+  in_rfid_auth = new input_trigger();
+  in_button1 = new input_trigger();
+  in_button2 = new input_trigger();
+  in_opto = new input_trigger();
 
-  in_button1.set_name("input/button1");
-  in_button2.set_name("input/button2");
-  in_opto.set_name("input/opto");
+  out_opto = new output_trigger();
+  
+  in_rfid->set_name("input/rfid");
+  in_rfid_auth->set_name("input/rfid/auth");
 
-  out_opto.set_name("output/opto");
+  in_button1->set_name("input/button1");
+  in_button2->set_name("input/button2");
+  in_opto->set_name("input/opto");
+
+  out_opto->set_name("output/opto");
+
   // todo - set output actions.
+  if (true) {
+    trigger_run_all(dump_trigger);
+  }
 
   /* we run through the configuration files in several passes. As we need
    * unique section names, we need to work through until weve read all

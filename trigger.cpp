@@ -54,6 +54,7 @@ void trigger::run_depends(void (*fn)(class trigger *trig))
 
 trigger::trigger()
 {
+  __log("DBG: new trigger %p\n", this);
   name = "anon";
   state = false;
   modified = false;

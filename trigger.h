@@ -14,7 +14,7 @@
 class trigger {
  public:
   trigger();
-  ~trigger() { };
+  ~trigger() { fprintf(stderr, "trigger %p removed\n", this); };
 
   void set_name(char * to) { this->name = to; }
   char *get_name(void) { return this->name; }
