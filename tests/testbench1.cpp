@@ -13,6 +13,7 @@
 #include "config.h"
 
 #include "trigger-utils.h"
+#include "trigger-script.h"
 
 /* read commands from a file to stimulate bits of the system */
 
@@ -22,18 +23,34 @@ void errExit(const char *msg)
   exit(1);
 }
 
+#define MAX_ARGS (8)
+
 int main(int argc, char **argv)
 {
   File f = File("../data/config.ini");
-
+  char *args[MAX_ARGS+1];
+  char *line;
+  int rc;
+  
   set_config_file(f);
   setup_triggers();
 
   // prepare to get going
   start_timer();
-  
+
+  printf("\nStarting command line:\n");
   while (1) {
+    line = trigger_readline(">");
+    rc = split_cmdline(line, MAX_ARGS, args);
+
+    if (rc < 0)
+      break;
     
+    rc = parse_command(rc, args);
+    if (rc)
+      break;
+    
+    free(line);
   }
 
   return 0;
