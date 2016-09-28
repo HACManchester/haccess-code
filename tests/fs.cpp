@@ -19,6 +19,8 @@ File::File(char *fname)
 
   this->end = lseek(this->fd, 0, SEEK_END);
   lseek(this->fd, 0, SEEK_SET);
+
+  fprintf(stderr, "%s(%p): opened %s, %d, end %ld\n", __func__, this, fname, this->fd, this->end);
 }
 
 int File::available(void)
@@ -26,13 +28,18 @@ int File::available(void)
   off_t off;
 
   off = lseek(this->fd, 0, SEEK_CUR);
+  //fprintf(stderr, "%s(%p): fd %d cur %ld end %ld\n", __func__, this, this->fd,  off, this->end);  
   return this->end - off;
 }
-
 
 File::operator bool(void)
 {
   return true;
+}
+
+size_t File::size(void)
+{
+  return this->end;
 }
 
 bool File::seek(uint32_t pos, SeekMode mode)
@@ -63,6 +70,7 @@ extern "C" void c_close(int fd);
 void File::close(void)
 {
   c_close(this->fd);
+  this->fd = -1;
 }
 
 String File::readStringUntil(char ch)
@@ -73,14 +81,9 @@ String File::readStringUntil(char ch)
 
   for (ptr = 0; ptr < MAX_BUFFER_SIZE-1; ptr++) {
     rd = read((uint8_t*)buff+ptr, sizeof(char));
-    if (rd <= 0) {
-      if (ptr == 0) {
-	return String("");
-      }
-      else
-	break;
-    }
-
+    if (rd <= 0)
+      break;
+    
     if (buff[ptr] == ch)
       break;
   }
