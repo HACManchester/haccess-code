@@ -12,7 +12,15 @@
 
 #include "config.h"
 
+#include "trigger-utils.h"
+
 /* read commands from a file to stimulate bits of the system */
+
+void errExit(const char *msg)
+{
+  fprintf(stderr, "ERROR: %s\n", msg);
+  exit(1);
+}
 
 int main(int argc, char **argv)
 {
@@ -21,7 +29,11 @@ int main(int argc, char **argv)
   set_config_file(f);
   setup_triggers();
 
+  // prepare to get going
+  start_timer();
+  
   while (1) {
+    
   }
 
   return 0;
