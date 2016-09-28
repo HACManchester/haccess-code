@@ -139,7 +139,9 @@ static void read_trigger(const char *section)
     Serial.printf("section %s: failed to get type\n", section);
     goto parse_err;
   }
-  
+
+  __log("DBG: trigger type %s\n", tmp);
+
   if (strcmp(tmp, "sr") == 0) {
     trig = new sr_trigger();
   } else if (strcmp(tmp, "or") == 0) {
@@ -162,7 +164,9 @@ static void read_trigger(const char *section)
     Serial.printf("section %s: failed type of '%s'\n", section, tmp);
     goto parse_err;
   }
-  
+
+  __log("DBG: new trigger %p\n", trig);
+
   if (!trig) {
     Serial.printf("no memory for trigger\n");
     return;
@@ -276,6 +280,8 @@ static void read_triggers(void)
     }
 
     line = f.readStringUntil('\n');
+    if (!line)
+      break;
     // is line null if this fails?
 
     if (line.startsWith("[logic") ||
