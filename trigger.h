@@ -32,7 +32,8 @@ class trigger {
   void (*notify_fn)(class trigger *trig, bool to);
 
   // edge/vs level triggers (may not work for all triggers //
-  void set_edge(bool to, bool val) { this->trig_edge = to; this->trig_val = val; };
+  void set_edge(bool to, bool val) {
+    this->trig_edge = to; this->trig_val = val; };
 
   // if we're an input, then this is true, otherwise false
   virtual bool is_input(void) { return false; };
@@ -120,8 +121,8 @@ public:
   void set_target(class trigger *trig) { this->target = trig; };
   void set_filter(bool off, bool on) { this->f_off = off; this->f_on = on; };
  protected:
-  bool f_on;
-  bool f_off;
+  bool f_on;	/* notify if trigger state is set to true */
+  bool f_off;	/* notify if trigger state is set to false */
   class trigger *target;
 
   bool recalc(class trigger *trig, bool prev);
