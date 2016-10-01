@@ -7,6 +7,7 @@
 #include "haccess.h"
 #include "trigger.h"
 #include "trigger_config.h"
+#include "mqtt.h"
 
 #ifdef __TEST
 #include <stdio.h>
@@ -129,6 +130,20 @@ static bool read_trigger_timer(class timer_trigger *tt, const char *section, cha
   return true;
 }
 
+static void mqtt_trigger_notify(class trigger *trig, bool state)
+{
+  class output_trigger *out = dynamic_cast<class output_trigger *>(trig);
+  struct mqtt_trigger_data *data;
+
+  data = (struct mqtt_trigger_data *)out->data;
+  if (!data) {
+    Serial.printf("%s: no data for trigger\n", __func__);
+    return;
+  }
+
+  mqtt_publish(data->topic, state ? "1" : "0");
+}
+
 static void read_trigger(const char *section)
 {
   class trigger *trig;
@@ -157,9 +172,17 @@ static void read_trigger(const char *section)
     // todo - check if we already have it registred
     trig = new input_trigger();
   } else if (strcmp(tmp, "mqtt_out") == 0) {
+    struct mqtt_trigger_data *data;
+    class output_trigger *out;
     // todo - check if we already have it registed
-    // todo - link this to mqtt topic, etc.
-    trig = new output_trigger();
+
+    trig = out = new output_trigger();
+    data = (struct mqtt_trigger_data *)calloc(1, sizeof(struct mqtt_trigger_data));
+    if (!trig || !data)
+      goto mem_err;
+
+    out->data = (void *)data;
+    out->notify_fn = mqtt_trigger_notify;
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
 
@@ -232,6 +255,8 @@ static void read_trigger(const char *section)
 
   return;
 
+mem_err:
+  Serial.printf("failed allocating memory for trigger\n");
 parse_err:
   Serial.printf("failed parsing '%s'\n", section);
 }

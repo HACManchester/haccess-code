@@ -66,6 +66,7 @@ public:
 class output_trigger : public trigger {
 public:
   virtual bool is_output(void) { return true; };
+  void *data;
 protected:
   bool recalc(class trigger *trig, bool prev);
 };

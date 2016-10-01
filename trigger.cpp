@@ -15,6 +15,7 @@ extern "C" void __debug_printf(const char *msg, ...);
 //#define __log (NULL)
 #endif
 
+#include "mqtt.h"
 #include "trigger.h"
 
 #define for_all_triggers(__ptr, __vector) for (it = __vector.begin(), __ptr = (it != __vector.end()) ? *it : NULL; it != __vector.end(); it++, __ptr = *it)
