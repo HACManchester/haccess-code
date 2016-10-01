@@ -200,6 +200,24 @@ static int process_set(int argc, char **args)
   return 0;
 }
 
+static int process_fire(int argc, char **args)
+{
+  class trigger *trig;
+
+  if (argc < 1)
+    return 1;
+
+  trig = trigger_find(args[0]);
+  if (!trig) {
+    fprintf(stderr, "could not find trigger '%s'\n", args[0]);
+    return 2;
+  }
+
+  trig->new_state(true);
+  trig->new_state(false); 
+  return 0;
+}
+
 
 int split_cmdline(char *line, int max, char **args)
 {
@@ -229,6 +247,8 @@ int parse_command(int nr_args, char **args)
     process_set(nr_args, args+1);
   } else if (strcmp(args[0], "get") == 0) {
     process_get(nr_args, args+1);
+  } else if (strcmp(args[0], "fire") == 0) {
+    process_fire(nr_args, args+1);
   } else if (strcmp(args[0], "dep") == 0) {
     process_dep(nr_args, args+1);
   } else if (strcmp(args[0], "dep-s") == 0) {
