@@ -55,9 +55,12 @@ void trigger::run_depends(void (*fn)(class trigger *trig))
 trigger::trigger()
 {
   __log("DBG: new trigger %p\n", this);
+
   name = "anon";
   state = false;
   modified = false;
+  trig_val = false;
+  trig_edge = false;
   triggers.push_back(this);
 }
 
@@ -95,7 +98,9 @@ void trigger::add_dependency(class trigger *trig)
 void trigger::depend_change(class trigger *trig, bool prev)
 {
   bool nstate = this->recalc(trig, prev);
-  __log("DBG: %s: this %s. trig %s: %d\n", __func__, this->name, trig->name, nstate);
+
+  __log("DBG: %s: this %s. trig %s: %d\n",
+	__func__, this->name, trig->name, nstate);
   this->new_state(nstate);
 }
 
@@ -254,9 +259,12 @@ bool forward_trigger::recalc(class trigger *trig, bool prev)
 {
   bool state = trig->get_state();
 
+  __log("DBG: %s: recalc %s: state %d\n", __func__, this->name, state);
+
   if ((!state && this->f_off) ||
       (state && this->f_on)) {
      target->new_state(state);
   }
-}
 
+  return false;
+}
