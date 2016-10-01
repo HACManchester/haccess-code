@@ -27,6 +27,11 @@ triggers: trigger.o timer.o test-trigger.o debug.o
 clean:
 	-rm *.o
 
+# genernal depends
+*.o:	FS.h
+*.o:	avr/pgmspace.h
+*.o:	../trigger.h
+
 # code from upper level project
 
 config.o:	../config.h
