@@ -23,6 +23,24 @@ void errExit(const char *msg)
   exit(1);
 }
 
+static void show_opto(trigger *trig, bool val)
+{
+  printf("Door is %s\n", val ? "activated" : "locked");
+}
+
+static void set_out(const char *name, void (*fn)(trigger *, bool to))
+{
+  class trigger *trig;
+
+  trig = trigger_find(name);
+  if (!trig) {
+    fprintf(stderr, "cannot find trigger '%s'\n", name);
+    return;
+  }
+
+  trig->notify_fn = fn;
+}
+
 #define MAX_ARGS (8)
 
 int main(int argc, char **argv)
@@ -34,6 +52,9 @@ int main(int argc, char **argv)
   
   set_config_file(f);
   setup_triggers();
+
+  // setup a few output notifiers
+  set_out("output/opto", show_opto);
 
   // prepare to get going
   start_timer();
