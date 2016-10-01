@@ -12,7 +12,7 @@ CFLAGS=-O2 -Wall
 
 all: triggers triggers2 testbench1
 
-testbench1: testbench1.o config.o trigger-script.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o csupport.o trigger-utils.o
+testbench1: testbench1.o config.o trigger-script.o trigger_config.o trigger.o timer.o millis.o fs.o IniFile.o WString.o avrclib.o csupport.o trigger-utils.o debug.o
 	g++ -lrt -o $@ $^
 
 triggers2: trigger.o  timer.o trigger-script.o test-trigger2.o millis.o trigger-utils.o

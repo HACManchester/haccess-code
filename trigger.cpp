@@ -9,6 +9,7 @@
 
 #ifdef __TEST
 #include <stdio.h>
+extern "C" void __debug_printf(const char *msg, ...);
 #define __log(...) printf(__VA_ARGS__)
 #else
 #define __log(...) do { } while(0)
