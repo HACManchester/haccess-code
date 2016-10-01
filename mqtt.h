@@ -2,7 +2,7 @@
 
 #ifdef __TEST
 
-static inline void mqtt_publish(char *topic, char *value)
+static inline void mqtt_publish(const char *topic, const char *value)
 {
   printf("mqtt: publish topic '%s' value '%s'\n", topic, value);
 }
@@ -10,7 +10,7 @@ static inline void mqtt_publish(char *topic, char *value)
 
 extern PubSubClient mqtt;
 
-static inline void mqtt_publish(char *topic, char *value)
+static inline void mqtt_publish(const char *topic, const char *value)
 {
   mqtt.publish(topic, value);
 }
