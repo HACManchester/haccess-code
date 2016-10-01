@@ -171,6 +171,9 @@ static void read_trigger(const char *section)
   } else if (strcmp(tmp, "input") == 0) {
     // todo - check if we already have it registred
     trig = new input_trigger();
+  } else if (strcmp(tmp, "mqtt_in") == 0) {
+     trig = new input_trigger();
+     // to do add this to a list of triggers acceptable to mqtt
   } else if (strcmp(tmp, "mqtt_out") == 0) {
     struct mqtt_trigger_data *data;
     class output_trigger *out;
@@ -183,6 +186,14 @@ static void read_trigger(const char *section)
 
     out->data = (void *)data;
     out->notify_fn = mqtt_trigger_notify;
+
+    if (cfgfile.getValue(section, "topic", tmp, sizeof(tmp))) {
+      Serial.printf("%s: topic '%s'\n", section, tmp);
+
+      data->topic = strdup(tmp);
+      if (!data->topic)
+	goto mem_err;
+    }
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
 
