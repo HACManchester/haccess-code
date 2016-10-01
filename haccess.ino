@@ -56,7 +56,7 @@ extern "C" {
 #include "config.h"
 #include "gpioexp.h"
 #include "urlwatch.h"
-
+#include "mqtt.h"
 
 // MQTT state
 WiFiClient mqttWiFi;
@@ -278,7 +278,10 @@ static void mqtt_callback(char *topic, byte *payload, unsigned int length)
       trig->new_state(true);
       trig->new_state(false);
     } else {
-      // did not understand //
+      // did not understand.
+
+      Serial.printf("mqtt: topic %s value %s not understood\n",
+      			   topic, payload);
     }
   }
 }
