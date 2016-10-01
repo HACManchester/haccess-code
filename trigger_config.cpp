@@ -218,9 +218,9 @@ static void read_trigger(const char *section)
       ft->set_name("internal/forward");
       tt->set_length(exptime);
       tt->set_edge(true, true);
-      tt->add_dependency(trig);  // todo - fix this it crashes     
-      //ft->add_dependency(tt);
-      //ft->set_target(trig);
+      tt->add_dependency(trig);  // todo - fix this it crashes
+      ft->set_target(trig);
+      ft->add_dependency(tt);
     } else {
       __log("DBG: failed to parse expiry\n");
       goto parse_err;
