@@ -86,7 +86,31 @@ static bool parse_time(char *buff, unsigned long *result)
   return true;
 }
 
-static void read_dependency_srcs(class trigger *target, const char *section, char *pfx)
+static void add_dep(class trigger *src, class trigger *dest)
+{
+  dest->add_dependency(src);
+}
+
+static void add_dep_sr_set(class trigger *src, class trigger *dest)
+{
+  class sr_trigger *sr = dynamic_cast<class sr_trigger *>(dest);
+
+  sr->add_set(src);
+}
+
+static void add_dep_sr_clr(class trigger *src, class trigger *dest)
+{
+  class sr_trigger *sr = dynamic_cast<class sr_trigger *>(dest);
+
+  sr->add_reset(src);
+}
+
+
+static void read_dependency_srcs(class trigger *target,
+				 const char *section,
+				 char *pfx,
+				 void (*fn)(class trigger *src,
+					    class trigger *dest))
 {
   class trigger *src;
   char name[20];
@@ -94,6 +118,9 @@ static void read_dependency_srcs(class trigger *target, const char *section, cha
   int nr;
 
   Serial.printf("%s: reading dep-src\n", section);
+
+  if (!target)
+    return;
 
   for (nr = 1; nr < 99; nr++) {
     sprintf(name, "%s%d", pfx, nr);
@@ -103,7 +130,8 @@ static void read_dependency_srcs(class trigger *target, const char *section, cha
     __log("DBG: section %s: %s => %p\n", section, tmp, src);
     src = get_trig(tmp);
     if (src) {
-      target->add_dependency(src);
+      fn(src, target);
+      //target->add_dependency(src);
     } else {
       __log("ERR: no trigger for '%s'\n", tmp);
     }
@@ -162,6 +190,11 @@ static void read_trigger(const char *section)
 
   if (strcmp(tmp, "sr") == 0) {
     trig = new sr_trigger();
+    if (!trig)
+      goto mem_err;
+
+    read_dependency_srcs(trig, section, "set", add_dep_sr_set);
+    read_dependency_srcs(trig, section, "clear", add_dep_sr_clr);
   } else if (strcmp(tmp, "or") == 0) {
     trig = new or_trigger();
   } else if (strcmp(tmp, "and") == 0) {
@@ -262,7 +295,7 @@ static void read_trigger(const char *section)
   }
 
   // note, dependency information can be handled elsewhere
-  read_dependency_srcs(trig, section, "source");
+  read_dependency_srcs(trig, section, "source", add_dep);
 
   return;
 
@@ -293,7 +326,7 @@ static void read_dependency(const char *section)
     return;
   }
 
-  read_dependency_srcs(target, section, "source");
+  read_dependency_srcs(target, section, "source", add_dep);
   // todo - if set/reset, add set/reset dependencies
 }
 
