@@ -45,10 +45,19 @@ static void set_out(const char *name, void (*fn)(trigger *, bool to))
 
 int main(int argc, char **argv)
 {
-  File f = File("../data/config.ini");
+  File f;
   char *args[MAX_ARGS+1];
   char *line;
+  char *fname;
   int rc;
+
+  if (argc < 2)
+    fname = "../data/config.ini";
+  else
+    fname = argv[1];
+
+  printf("Opening '%s' as config file\n", fname);
+  f = File(fname);
   
   set_config_file(f);
   setup_triggers();
