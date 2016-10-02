@@ -115,17 +115,23 @@ static void read_dependency_srcs(class trigger *target,
   class trigger *src;
   char name[20];
   char tmp[96];
+  bool read;
   int nr;
 
-  Serial.printf("%s: reading dep-src\n", section);
+  Serial.printf("%s: reading dep-src, target %p\n", section, target);
 
   if (!target)
     return;
 
-  for (nr = 1; nr < 99; nr++) {
-    sprintf(name, "%s%d", pfx, nr);
-    if (!cfgfile.getValue(section, name, tmp, sizeof(tmp)))
-      break;
+  for (nr = 0; nr < 99; nr++) {
+    sprintf(name, nr == 0 ? "%s" : "%s%d", pfx, nr);
+    read =cfgfile.getValue(section, name, tmp, sizeof(tmp));
+    if (!read) {
+      if (nr == 0)
+	continue;
+      else
+	break;
+    }
 
     __log("DBG: section %s: %s => %p\n", section, tmp, src);
     src = get_trig(tmp);
