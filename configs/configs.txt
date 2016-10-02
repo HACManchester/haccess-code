@@ -1,3 +1,5 @@
+# Introduction
+
 The configuration file format is IniFile style, with various sections supplied
 depending on the mode of the device.
 
@@ -9,8 +11,7 @@ Times are specified in an integer plus the unit, which are as follows:
       m = minutes
       h = hours
 
-Internal logic
---------------
+# Internal logic
 
 The logic nodes are built up from a set of simple logic blocks which act
 on their inputs (dependencies) to form new outputs. The format is such that
@@ -36,8 +37,9 @@ contain the same linking information as an output or logic node.
 
 Input nodes are mostly related to extending the standard inputs.
 
-Example nodes:
+# Example nodes
 
+<pre>
 [input]
 name=input		;; name for node (debug, links, etc)
 type=mqtt_in		;; this is an mqtt input node
@@ -54,9 +56,11 @@ type=and		;; this is an 'and' node
 name=and_node		;; the sname (debug, links, etc);
 source1=input_a		;; the first input
 source2=input_b		;; the second input
+</pre>
 
 An example node pipeline:
 
+<pre>
 [input1]
 name=input1
 type=mqtt_in
@@ -78,6 +82,7 @@ name=and1
 type=and
 source1=input1
 source2=input2
+</pre>
 
 The above creates two inputs, and then two logic nodes which depends on
 those two inputs.
@@ -95,24 +100,21 @@ source{x}= The dependency source for the node. These are numbered 1 up.
  	in sequence 1..n with no breaks.
 
 topic=	The mqtt topic to publish.
-	Note, this may be supported by logic nodes depending on the code.
-	Note, this may be supported by input nodes depending on the code.
 
 
-Timer nodes:
+## Timer nodes
 
 time=	The time to remain on after the input has finished triggering
 	the node.
 
 Note, the timer nodes do not yet support edge trigger.
 
-
-MQTT nodes;
+## MQTT nodes
 
 topic=	The mqtt topic to either respond to, or publish to.
 
 
-Input nodes:
+## Input nodes
 
 default= The default value when the node is create.
 
