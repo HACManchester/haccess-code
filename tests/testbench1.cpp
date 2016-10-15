@@ -25,7 +25,9 @@ void errExit(const char *msg)
 
 static void show_opto(trigger *trig, bool val)
 {
-  printf("Door is %s\n", val ? "activated" : "locked");
+  printf("Door is %s (opto output is %s)\n",
+	 val ? "activated" : "locked",
+	 val ? "pull-down" : "open-circuit");
 }
 
 static void set_out(const char *name, void (*fn)(trigger *, bool to))
