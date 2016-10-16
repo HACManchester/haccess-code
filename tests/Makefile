@@ -8,7 +8,11 @@ ARDUINO=~/arduino-1.6.11/hardware/arduino/avr/cores/arduino
 # We add our own Serial.h for Serial class support
 CXXFLAGS=-O2 -Wall -I../ -I`pwd` -include Serial.h -include $(ARDUINO)/WString.h -std=c++1z -D__TEST
 
+# I think strings can be writable
+CXXFLAGS+=-Wno-write-strings
+
 CFLAGS=-O2 -Wall
+
 
 all: triggers triggers2 testbench1
 
