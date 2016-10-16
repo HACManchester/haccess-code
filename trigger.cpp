@@ -218,7 +218,7 @@ bool trigger::should_trigger(class trigger *trig, bool prev)
   if (prev && !this->get_state())
     return !this->trig_val;
 
-  if (!prev && this->get_state());
+  if (!prev && this->get_state())
     return this->trig_val;
 
   return false;
