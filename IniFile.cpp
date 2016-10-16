@@ -107,7 +107,7 @@ bool IniFile::getValue(const char* section, const char* key,
 bool IniFile::getValue(const char* section, const char* key,
 			 char* buffer, size_t len, char *value, size_t vlen) const
 {
-  if (getValue(section, key, buffer, len) < 0)
+  if (!getValue(section, key, buffer, len))
     return false; // error
   if (strlen(buffer) >= vlen)
     return false;
@@ -121,7 +121,7 @@ bool IniFile::getValue(const char* section, const char* key,
 bool IniFile::getValue(const char* section, const char* key, 
 			  char* buffer, size_t len, bool& val) const
 {
-  if (getValue(section, key, buffer, len) < 0)
+  if (!getValue(section, key, buffer, len))
     return false; // error
   
   if (strcasecmp(buffer, "true") == 0 ||
@@ -216,7 +216,7 @@ bool IniFile::getIPAddress(const char* section, const char* key,
   if (len < 16)
     return false;
 
-  if (getValue(section, key, buffer, len) < 0) 
+  if (!getValue(section, key, buffer, len))
     return false; // error
 
   int i = 0;
@@ -250,7 +250,7 @@ bool IniFile::getIPAddress(const char* section, const char* key,
   if (len < 16)
     return false;
 
-  if (getValue(section, key, buffer, len) < 0) 
+  if (!getValue(section, key, buffer, len))
     return false; // error
 
   int i = 0;
@@ -283,7 +283,7 @@ bool IniFile::getMACAddress(const char* section, const char* key,
   if (len < 18)
     return false;
 
-  if (getValue(section, key, buffer, len) < 0)
+  if (!getValue(section, key, buffer, len))
     return false; // error
   
   int i = 0;
@@ -306,7 +306,7 @@ bool IniFile::getMACAddress(const char* section, const char* key,
 	mac[i] += (toupper(*cp) - 55); // convert A to 0xA, F to 0xF
       }
       else {
-	memset(mac, 0, sizeof(mac));
+	memset(mac, 0, 6);
 	return false;
       }
     }
