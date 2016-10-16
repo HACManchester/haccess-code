@@ -131,6 +131,7 @@ bool trigger::depends_on(class trigger *trig)
 
 /* for the moment we'll stick the trigger code in here */
 
+
 bool and_trigger::recalc(class trigger *trig, bool prev)
 {
   std::vector<class trigger *>::iterator it;
@@ -209,16 +210,20 @@ bool output_trigger::recalc(class trigger *trig, bool prev)
   return false;
 }
 
+// utility function for some triggers
+//
+// this is the object we're considering the trigger action for
+// trig is the trigger that is the source that changed
 bool trigger::should_trigger(class trigger *trig, bool prev)
 {
   if (!this->trig_edge) {
     return (!trig->get_state() && this->get_state());
   }
 
-  if (prev && !this->get_state())
+  if (prev && !trig->get_state())
     return !this->trig_val;
 
-  if (!prev && this->get_state())
+  if (!prev && trig->get_state())
     return this->trig_val;
 
   return false;
