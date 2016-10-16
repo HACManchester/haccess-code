@@ -282,6 +282,11 @@ static void read_trigger(const char *section)
     }
   }
 
+  if (cfgfile.getValue(section, "edge", tmp, sizeof(tmp), bv)) {
+    __log("DBG: edge value %s requested (%s)\n", tmp, bv ? "high" : "low");
+    trig->set_edge(true, bv);
+  }
+
   if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
     unsigned long exptime;
 
