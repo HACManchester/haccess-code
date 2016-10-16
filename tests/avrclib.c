@@ -17,15 +17,15 @@ char *ltoa (long val, char *s, int radix)
 {
   switch (radix) {
   case 10:
-    sprintf(s, "%d", val);
+    sprintf(s, "%ld", val);
     return s;
   case 16:
-    sprintf(s, "%x", val);
+    sprintf(s, "%lx", val);
     return s;
   }
   
-  fprintf(stderr, "%s: radix %d not supported\n", __func__);
-  return NULL;  
+  fprintf(stderr, "%s: radix %d not supported\n", __func__, radix);
+  return NULL;
 }
 
 char *utoa (unsigned int val, char *s, int radix)
@@ -44,7 +44,7 @@ char *ultoa (unsigned long val, char *s, int radix)
     return s;
   }
 
-  fprintf(stderr, "%s: radix %d not supported\n", __func__);
+  fprintf(stderr, "%s: radix %d not supported\n", __func__, radix);
   return NULL;
 }
 
