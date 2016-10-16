@@ -29,8 +29,7 @@ void do_sleep(unsigned long sl)
 
 static void handler(int sig, siginfo_t *si, void *uc)
 {
-  timer_t tmr = si->si_value.sival_ptr;
-
+  //timer_t tmr = si->si_value.sival_ptr;
   //printf("signal %ld\n", millis());
   timer_sched(millis());
 }
@@ -53,6 +52,14 @@ int start_timer(void)
   if (sigaction(SIG, &sa, NULL) == -1)
     errExit("sigaction");
 
+
+  /* block timer signal until finished creation */
+  sigemptyset(&mask);
+  sigaddset(&mask, SIG);
+
+  if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1)
+    errExit("sigprocmask");
+
   /* Create the timer */
 
   sev.sigev_notify = SIGEV_SIGNAL;
@@ -73,6 +80,9 @@ int start_timer(void)
 
   if (timer_settime(timerid, 0, &its, NULL) == -1)
     errExit("timer_settime");
+
+  if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+    errExit("sigprocmask");
 
   return 0;
 }
