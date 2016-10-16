@@ -133,11 +133,10 @@ static void read_dependency_srcs(class trigger *target,
 	break;
     }
 
-    __log("DBG: section %s: %s => %p\n", section, tmp, src);
     src = get_trig(tmp);
+    __log("DBG: section %s: %s => %p\n", section, tmp, src);
     if (src) {
       fn(src, target);
-      //target->add_dependency(src);
     } else {
       __log("ERR: no trigger for '%s'\n", tmp);
     }
