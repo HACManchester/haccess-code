@@ -273,6 +273,16 @@ static void read_trigger(const char *section)
     // todo - attach to the mqtt handler?
   }
 
+  if (cfgfile.getValue(section, "repeat", tmp, sizeof(tmp))) {
+    unsigned long reptime;
+
+    if (parse_time(tmp, &reptime)) {
+      Serial.printf("%s: repeat %ld ms\n", section, reptime);
+      // todo - work out how to do this.
+      // new timer type?
+    }
+  }
+
   if (cfgfile.getValue(section, "expires", tmp, sizeof(tmp))) {
     unsigned long exptime;
 
