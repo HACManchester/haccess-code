@@ -1,5 +1,6 @@
 // Haccess trigger configuration functions
 
+#include <vector>
 #include "IniFile.h"
 
 #include "FS.h"
@@ -93,14 +94,14 @@ static void add_dep(class trigger *src, class trigger *dest)
 
 static void add_dep_sr_set(class trigger *src, class trigger *dest)
 {
-  class sr_trigger *sr = dynamic_cast<class sr_trigger *>(dest);
+  class sr_trigger *sr = static_cast<class sr_trigger *>(dest);
 
   sr->add_set(src);
 }
 
 static void add_dep_sr_clr(class trigger *src, class trigger *dest)
 {
-  class sr_trigger *sr = dynamic_cast<class sr_trigger *>(dest);
+  class sr_trigger *sr = static_cast<class sr_trigger *>(dest);
 
   sr->add_reset(src);
 }
@@ -165,7 +166,7 @@ static bool read_trigger_timer(class timer_trigger *tt, const char *section, cha
 
 static void mqtt_trigger_notify(class trigger *trig, bool state)
 {
-  class output_trigger *out = dynamic_cast<class output_trigger *>(trig);
+  class output_trigger *out = static_cast<class output_trigger *>(trig);
   struct mqtt_trigger_data *data;
 
   data = (struct mqtt_trigger_data *)out->data;

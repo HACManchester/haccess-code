@@ -12,7 +12,7 @@
 #include <Wire.h>
 #include <SPI.h>
 
-//#define NFC_ELECHOUSE
+#define NFC_ELECHOUSE
 
 #if !defined(NFC_ELECHOUSE)
 // nfc library
@@ -67,6 +67,7 @@ bool wifi_up = false;
 
 // internal state information
 bool fs_opened = false;
+bool have_pn532 = true;
 
 bool dbg_showCardRead = true;
 
@@ -104,6 +105,8 @@ void setup_gpioexp(void)
   Serial.println("Initialising GPIO expander");
 
   pinMode(15, OUTPUT);
+  digitalWrite(15, LOW);
+  delay(1);
   digitalWrite(15, HIGH);
 
   Wire.beginTransmission(MCP_IICADDR);
@@ -116,7 +119,7 @@ void setup_gpioexp(void)
    */
   if (ret != 0) {
     Serial.println("ERROR: failed to talk to PCA IO expander");
-    while (true) {
+    while (false) {
       ESP.wdtFeed(); delay(1);
       Wire.beginTransmission(MCP_IICADDR);
       Wire.write(0x00);
@@ -133,6 +136,9 @@ void setup_gpioexp(void)
   // set the io-direction to make GP[7..4] to output
   gpio_exp_wr(MCP_IODIR, byte(0xff ^ 0xF0));
 
+  Serial.print("MCP_IODIR=");
+  Serial.println(gpio_exp_rd(MCP_IODIR));
+
   // set output values
   gpio_exp_initout(0x00);       // start with all off
 
@@ -146,6 +152,9 @@ void setup_gpioexp(void)
 
   // set interrupt to any of the input pins
   gpio_exp_wr(MCP_INTCON, 0x0f);
+
+  Serial.print("MCP_IODIR=");
+  Serial.println(gpio_exp_rd(MCP_IODIR));
 }
 
 static void read_wifi_config(void)
@@ -199,6 +208,7 @@ static void init_nfc(void)
   Serial.println(versiondata, HEX);
 
   if (! versiondata) {
+    have_pn532 = false;
     Serial.println("Didn't find PN53x board");
     return;
   }
@@ -246,6 +256,12 @@ void setupDisplay(void)
   Serial.println("Initialised display");
 
   gpio_exp_setgpio(6, 1);   // turn backlight on
+
+  if (true) {
+     Serial.println("displaying serial boot message");
+     PCD8544_gotoXY(0, 0);
+     PCD8544_lcdPrint("HACCESS 1 BOOT");
+  }  
 }
 
 static void mqtt_callback(char *topic, byte *payload, unsigned int length)
@@ -398,7 +414,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println("ESP8266 Haccess node");
 
-  //twi_setClockStretchLimit(30000);
+  twi_setClock(100000);
+  Serial.println("Setting i2c clock stretch to 500uS");
+  twi_setClockStretchLimit(500);  // think this is 500uS
 
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
@@ -568,6 +586,9 @@ static void checkGPIOs(void)
 
     Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
 
+    if (true)
+      return;
+   
     in_button1->new_state((gpio & 1) != 0);
     in_button2->new_state((gpio & 2) != 0);
     in_opto->new_state((gpio & 4) != 0);
@@ -763,7 +784,7 @@ void loop() {
 
   curtime = millis();
 
-  if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid) {
+  if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid && have_pn532) {
     //Serial.println("card check");
     checkForCard();
   }
@@ -774,8 +795,8 @@ void loop() {
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
     processMqtt();
-    sayHello();
-    process_wdt();
+    //sayHello();
+    //process_wdt();
 
     gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);
     if (card_ok_count > 0)
