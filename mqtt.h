@@ -8,6 +8,8 @@ static inline void mqtt_publish(const char *topic, const char *value)
 }
 #else
 
+#include <PubSubClient.h>
+
 extern PubSubClient mqtt;
 
 static inline void mqtt_publish(const char *topic, const char *value)

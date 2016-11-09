@@ -160,7 +160,7 @@ bool or_trigger::recalc(class trigger *trig, bool prev)
   class trigger *ptr;
 
   __log("or_trigger: dep change %s by %s\n", this->get_name(), trig->get_name());
-  
+ 
   // todo - should none return true or false?
   for_all_triggers(ptr, this->depends) {
     __log("or_trigger: dep %s is %d\n", ptr->get_name(), ptr->get_state());

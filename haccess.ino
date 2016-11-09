@@ -29,7 +29,6 @@
 #include <ESP8266WebServer.h>
 
 // mqtt server
-/., lude <PubSubClient.h>
 
 // for the display (to be moved out)
 //#include <Adafruit_GFX.h>
@@ -569,9 +568,9 @@ static void checkGPIOs(void)
 
     Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
 
-    in_button1.new_state((gpio & 1) != 0);
-    in_button2.new_state((gpio & 2) != 0);
-    in_opto.new_state((gpio & 4) != 0);
+    in_button1->new_state((gpio & 1) != 0);
+    in_button2->new_state((gpio & 2) != 0);
+    in_opto->new_state((gpio & 4) != 0);
 
     PCD8544_gotoXY(64 + 5, 0);
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
