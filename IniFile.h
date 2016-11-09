@@ -99,7 +99,7 @@ public:
   bool getIPAddress(const char* section, const char* key,
 		       char* buffer, size_t len, uint8_t* ip) const;
   
-#if defined(ARDUINO) && ARDUINO >= 100
+#if defined(ARDUINO) && ARDUINO >= 100 && 0
   bool getIPAddress(const char* section, const char* key,
 		       char* buffer, size_t len, IPAddress& ip) const;
 #endif

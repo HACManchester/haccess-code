@@ -242,7 +242,7 @@ bool IniFile::getIPAddress(const char* section, const char* key,
 }
 
 
-#if defined(ARDUINO) && ARDUINO >= 100
+#if defined(ARDUINO) && ARDUINO >= 100 && 0
 bool IniFile::getIPAddress(const char* section, const char* key,
 			      char* buffer, size_t len, IPAddress& ip) const
 {
