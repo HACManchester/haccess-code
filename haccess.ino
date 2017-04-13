@@ -1,6 +1,7 @@
 // Haccess v1 Access Control System
 // Copyright 2015 Ben Dooks <ben@fluff.org>
 
+#include "build.h"
 #include "trigger.h"
 #include "timer.h"
 #include "trigger_config.h"
@@ -12,7 +13,6 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#define NFC_ELECHOUSE
 
 #if !defined(NFC_ELECHOUSE)
 // nfc library
@@ -38,6 +38,7 @@
 // QIO, 80MHz, 1M (512K SPIFFS)
 // note, trying 40MHz QIO
 
+#ifdef USE_PCD8544
 extern "C" {
 #include "pcd8544.h"
 }
@@ -45,6 +46,7 @@ extern "C" {
 // the D/C line is set to gpio expander
 // the reset line is set to gpio expander
 //Adafruit_PCD8544 display = Adafruit_PCD8544(14, 13, -1, 0, -2);
+#endif
 
 // IniFile library
 #include "IniFile.h"
@@ -98,7 +100,7 @@ PN532 nfc(pn532i2c);
 
 class UrlWatch *watch_cfg;
 
-void setup_gpioexp(void)
+static void setup_gpioexp_mcp(void)
 {
   int ret;
 
@@ -152,6 +154,9 @@ void setup_gpioexp(void)
 
   // set interrupt to any of the input pins
   gpio_exp_wr(MCP_INTCON, 0x0f);
+
+  Serial.print("MCP_INTCON=");
+  Serial.println(gpio_exp_rd(MCP_INTCON));
 
   Serial.print("MCP_IODIR=");
   Serial.println(gpio_exp_rd(MCP_IODIR));
@@ -235,9 +240,10 @@ static void check_card_list(void)
   f.close();
 }
 
+#ifdef USE_PCD8544
 static PCD8544_Settings pcd8544_settings;
 
-void setupDisplay(void)
+static void setupDisplay(void)
 {
   pcd8544_settings.lcdVop = 0xB1;
   pcd8544_settings.tempCoeff = 0x04;
@@ -263,6 +269,11 @@ void setupDisplay(void)
      PCD8544_lcdPrint("HACCESS 1 BOOT");
   }  
 }
+#else
+static void setupDisplay(void)
+{
+}
+#endif /* USE_PCD8544 */
 
 static void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
@@ -341,12 +352,16 @@ static bool config_wdt = false;
 
 #define WDT_ADDR  (0x50)
 
+
+
+
 // pet the external watchdog (if it exists)
 static void process_wdt(void)
 {
   if (!config_wdt)
     return;
 
+  wdt_pet();
   Wire.beginTransmission(WDT_ADDR);
   Wire.write(0x29);
   Wire.endTransmission();
@@ -410,13 +425,13 @@ parse_err:
 }
 
 void setup() {
-  Wire.begin(4, 5);
+  Wire.begin(5, 4);
   Serial.begin(115200);
   Serial.println("ESP8266 Haccess node");
 
   twi_setClock(100000);
   Serial.println("Setting i2c clock stretch to 500uS");
-  twi_setClockStretchLimit(500);  // think this is 500uS
+  twi_setClockStretchLimit(7000);  // think this is 700uS
 
   // ensure the pins for spi are configured for correct mode
   pinMode(14, OUTPUT);
@@ -530,7 +545,7 @@ static void show_unknown_card(class CardInfo *info, uint8_t *uid, uint8_t uidLen
 static int card_ok_count;
 static bool show_card = true;
 
-static void checkForCard(void)
+static void checkForCard(bool show_fail)
 {
   boolean success;
   uint8_t uid[8] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
@@ -538,7 +553,7 @@ static void checkForCard(void)
   class CardInfo info;
   bool known_card = false;
 
-  //Serial.println("Reading card");
+  if (show_fail) Serial.println("Reading card");
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   //Serial.println("Read card");
 
@@ -569,7 +584,8 @@ static void checkForCard(void)
 
     mqtt.publish(known_card ? "haccess/knownrfid" : "haccess/unknownrfid", uid, uidLength);
   } else {
-    //Serial.println("no card");
+    if (show_fail)
+      Serial.println("no card");
   }
 }
 
@@ -586,7 +602,7 @@ static void checkGPIOs(void)
 
     Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
 
-    if (true)
+    if (false)
       return;
    
     in_button1->new_state((gpio & 1) != 0);
@@ -620,6 +636,10 @@ static void serial_interaction(void)
     case 'r':
       Serial.println("Rebooting...");
       ESP.restart();
+      break;
+
+    case 'R':
+      checkForCard(true);
       break;
 
     case 'h':
@@ -786,7 +806,7 @@ void loop() {
 
   if (timeTo(&lastCard, cfg.rfid_interval, curtime) && cfg.en_rfid && have_pn532) {
     //Serial.println("card check");
-    checkForCard();
+    checkForCard(false);
   }
 
   if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
