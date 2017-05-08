@@ -108,6 +108,7 @@ PN532 nfc(pn532i2c);
 
 class UrlWatch *watch_cfg;
 
+#ifdef USE_MCP
 static void setup_gpioexp_mcp(void)
 {
   int ret;
@@ -169,6 +170,12 @@ static void setup_gpioexp_mcp(void)
   Serial.print("MCP_IODIR=");
   Serial.println(gpio_exp_rd(MCP_IODIR));
 }
+#else
+static void setup_gpioexp_mcp(void)
+{
+  Serial.println("MCP IO expander not used");
+}
+#endif
 
 static void read_wifi_config(void)
 {
@@ -445,7 +452,6 @@ void setup() {
   // set the pins
   digitalWrite(15, 0);
   digitalWrite(14, 0);
-  digitalWrite(16, 0);
   digitalWrite(0, 1);
 
   // show the chip and sdk version
@@ -589,12 +595,22 @@ static void checkForCard(bool show_fail)
   }
 }
 
+static unsigned gpio_get(void)
+{
+  unsigned ret = 0;
+
+  ret |= (gpio_read(GPIO_IN_R)) ? 1 : 0;
+  ret |= (gpio_read(GPIO_IN_G)) ? 2 : 0;
+  ret |= (gpio_read(GPIO_IN_USER)) ? 4 : 0;
+  return ret;
+}
+
 static unsigned old_gpio = 0xff;
 
 static void checkGPIOs(void)
 {
   if (true) {
-    unsigned gpio = gpio_exp_rd(MCP_GPIO);
+    unsigned gpio = gpio_get();
 
     gpio &= 7;
     if (gpio == old_gpio)
@@ -619,11 +635,6 @@ static void checkGPIOs(void)
 
     button_count = 5;
   } else {
-
-    if ((gpio_exp_rd(MCP_GPIO) & (0x3)) != 0x3)
-      gpio_exp_setgpio(7, false);
-    else
-      gpio_exp_setgpio(7, true);;
   }
 }
 
@@ -648,15 +659,15 @@ static void serial_interaction(void)
       break;
 
     case 'b':
-      gpio_exp_setgpio(6, 0);
+      //gpio_exp_setgpio(6, 0);
       break;
 
     case 'B':
-      gpio_exp_setgpio(6, 1);
+      //gpio_exp_setgpio(6, 1);
       break;
 
     case 'G':
-      Serial.printf("GPIO state %x, IODIR=%x, INTF=%x PU=%x\n", gpio_exp_rd(MCP_GPIO), gpio_exp_rd(MCP_IODIR), gpio_exp_rd(MCP_INTF), gpio_exp_rd(MCP_GPPU));
+      //Serial.printf("GPIO state %x, IODIR=%x, INTF=%x PU=%x\n", gpio_exp_rd(MCP_GPIO), gpio_exp_rd(MCP_IODIR), gpio_exp_rd(MCP_INTF), gpio_exp_rd(MCP_GPPU));
       break;
 
     case 'p':
