@@ -25,6 +25,7 @@
 #define GPIO_IN_IRQ (GPIO_EXP(3))
 #define GPIO_OUT_RST  (GPIO_EXP(4))
 #define GPIO_OUT_LCD_nCS (GPIO_EXP(5))
+#define GPIO_OUT_LCD_BL (GPIP_EXP(6))
 #define GPIO_OUT_OPTO (GPIO_EXP(7))
 #endif
 
@@ -37,6 +38,7 @@
 #define GPIO_IN_IRQ       -1
 #define GPIO_OUT_RST      -1
 //#define GPIO_OUT_LCD_nCS
+#define GPIO_OUT_BL       -1
 #define GPIO_OUT_OPTO     GPIO_STM32(STM_GPIO_OPTO_OUT)
 #endif
 

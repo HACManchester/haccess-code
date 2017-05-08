@@ -723,7 +723,7 @@ static void runDisplay(void)
       button_count--;
 
     on = (button_count || detect_count);
-    gpio_exp_setgpio(6, on ? 1 : 0);
+    gpio_set(GPIO_OUT_BL, on ? 1 : 0);
 
     if (!on) {
       // clear the card lcd area
@@ -734,7 +734,7 @@ static void runDisplay(void)
       PCD8544_gotoXY(0, 5);
       PCD8544_lcdPrint("            ");
       // turn off the backlight
-      gpio_exp_setgpio(6, 0);
+      gpio_set(GPIO_OUT_BL, 0);
     }
   }
 
@@ -827,9 +827,10 @@ void loop() {
     runDisplay();
     processMqtt();
     //sayHello();
-    //process_wdt();
+    process_wdt();
 
-    gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);
+    //gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);
+    gpio_set(GPIO_OUT_OPTO, card_ok_count > 0 ? 1 : 0);
     if (card_ok_count > 0)
       card_ok_count--;
   }
