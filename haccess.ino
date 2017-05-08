@@ -5,6 +5,7 @@
 #include "trigger.h"
 #include "timer.h"
 #include "trigger_config.h"
+#include "stm32_support.h"
 
 #include <ESP8266WiFi.h>
 #include "FS.h"
@@ -46,6 +47,13 @@ extern "C" {
 // the D/C line is set to gpio expander
 // the reset line is set to gpio expander
 //Adafruit_PCD8544 display = Adafruit_PCD8544(14, 13, -1, 0, -2);
+
+#else
+
+#define PCD8544_gotoXY(x, y) do { } while(0)
+#define PCD8544_lcdPrint(str) do { } while(0)
+#define PCD8544_lcdCharacter(ch) do { } while(0)
+  
 #endif
 
 // IniFile library
@@ -352,19 +360,13 @@ static bool config_wdt = false;
 
 #define WDT_ADDR  (0x50)
 
-
-
-
 // pet the external watchdog (if it exists)
 static void process_wdt(void)
 {
   if (!config_wdt)
     return;
-
+//
   wdt_pet();
-  Wire.beginTransmission(WDT_ADDR);
-  Wire.write(0x29);
-  Wire.endTransmission();
 }
 
 
@@ -437,9 +439,6 @@ void setup() {
   pinMode(14, OUTPUT);
   pinMode(13, OUTPUT);
   pinMode(0, OUTPUT);
-
-  pinMode(16, OUTPUT);  // WS LED
-
   pinMode(12, INPUT);   // IRQ from card reader
   pinMode(2, INPUT);    // irq pin
 
@@ -447,6 +446,7 @@ void setup() {
   digitalWrite(15, 0);
   digitalWrite(14, 0);
   digitalWrite(16, 0);
+  digitalWrite(0, 1);
 
   // show the chip and sdk version
   show_ids();
