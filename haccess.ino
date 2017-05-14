@@ -333,7 +333,8 @@ static void setup_mqtt(void)
 
   cfg.mqtt_server = get_cfg_str("mqtt", "server");
   if (!cfg.mqtt_server) {
-    // todo?
+    Serial.println("no mqtt server specified");
+    return;
   }
 
   cfgfile.clearError();
@@ -372,11 +373,8 @@ static void process_wdt(void)
 {
   if (!config_wdt)
     return;
-//
   wdt_pet();
 }
-
-
 
 
 char cfgbuff[128];
@@ -459,8 +457,8 @@ void setup() {
   setup_gpioexp();
   process_wdt();
 
-  gpio_exp_setgpio(5, 0); // set the display nCS=0
-  gpio_exp_setgpio(6, 1); // set the display BL=1 (on)
+  //gpio_exp_setgpio(5, 0); // set the display nCS=0
+  //gpio_exp_setgpio(6, 1); // set the display BL=1 (on)
   setupDisplay();
 
   Serial.println("MAC " + WiFi.macAddress());
@@ -653,6 +651,10 @@ static void serial_interaction(void)
       checkForCard(true);
       break;
 
+    case 'r':
+      card_ok_count = 3;
+      break;
+
     case 'h':
     case 'H':
       Serial.println("Hello");
@@ -660,10 +662,12 @@ static void serial_interaction(void)
 
     case 'b':
       //gpio_exp_setgpio(6, 0);
+      gpio_set(GPIO_OUT_BL, 0);
       break;
 
     case 'B':
       //gpio_exp_setgpio(6, 1);
+      gpio_set(GPIO_OUT_BL, 1);
       break;
 
     case 'G':
@@ -753,6 +757,7 @@ static void setWifiState(bool up)
     Serial.println("WiFi up");
     Serial.print(" IP ");
     Serial.println(WiFi.localIP());
+    mqtt.publish("wifiup", "%ld", millis());
   } else {
     Serial.println("WiFi down");
   }
@@ -761,6 +766,7 @@ static void setWifiState(bool up)
   wifi_str[1] = 0x0;
   PCD8544_gotoXY(64, 0);
   PCD8544_lcdPrint(wifi_str);
+
 }
 
 static void sayHello(void)
@@ -809,6 +815,7 @@ void loop() {
   } else {
     if (!wifi_up) {
       wifi_up = true;
+      processMqtt();
       setWifiState(wifi_up);
     }
   }
@@ -826,7 +833,7 @@ void loop() {
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
     processMqtt();
-    //sayHello();
+    sayHello();
     process_wdt();
 
     //gpio_exp_setgpio(7, card_ok_count > 0 ? true : false);

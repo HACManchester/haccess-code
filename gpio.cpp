@@ -38,9 +38,9 @@ extern void gpio_set_dir(unsigned int gpio, unsigned int dir)
   if (gpio_is_arduino(gpio)) {
     pinMode(gpio, dir);
   } else if (gpio_is_mcp(gpio)) {
+    // do we need this?
   } else if (gpio_is_stm32(gpio)) {
     stm32_gpio_setdir(gpio - GPIO_BASE_STM32, dir);
   }
 }
-
 
