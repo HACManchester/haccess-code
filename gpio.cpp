@@ -13,9 +13,11 @@ int gpio_read(unsigned int gpio)
   int value = -1;
 
   if (gpio_is_arduino(gpio)) {
+    value = digitalRead(gpio);
   } else if (gpio_is_mcp(gpio)) {
+    // todo //
   } else if (gpio_is_stm32(gpio)) {
-    stm32_gpio_read(gpio - GPIO_BASE_STM32);
+    value = stm32_gpio_read(gpio - GPIO_BASE_STM32);
   }
 
   return value;
