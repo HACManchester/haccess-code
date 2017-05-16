@@ -22,6 +22,7 @@
 
 #else
 #include <PN532_I2C.h>
+#include <PN532_SPI.h>
 #include <PN532.h>
 #endif
 
@@ -101,8 +102,13 @@ Adafruit_PN532 nfc(14, 12, 13, 16);
 
 #if defined (NFC_ELECHOUSE)
 
+#if 0
 PN532_I2C pn532i2c(Wire);
 PN532 nfc(pn532i2c);
+#else
+PN532_SPI pn532spi(SPI, 0);   // v2 - spi on 0
+PN532 nfc(pn532spi);
+#endif
 
 #endif
 
@@ -432,7 +438,8 @@ parse_err:
 }
 
 void setup() {
-  Wire.begin(5, 4);
+  //Wire.begin(5, 4);
+  Wire.begin(4, 5);
   Serial.begin(115200);
   Serial.println("ESP8266 Haccess node");
 
@@ -489,7 +496,7 @@ void setup() {
   check_card_list();
   process_wdt();
 
-#if defined(PN_IIC) || defined(NFC_ELECHOUSE)
+#if defined(PN_IIC)
   Serial.println("PN532 is IIC connected");
 #else
   Serial.println("PN532 is SPI connected");
@@ -518,6 +525,7 @@ static void checkForNewFiles(void)
     Serial.println("configuration changed\n");
     copyCardList(watch_cfg->getHost(), watch_cfg->getPort(), watch_cfg->getUrl());
     Serial.println("configuration fetched\n");
+    // todo - announce the new load?
   }
 }
 
@@ -651,7 +659,7 @@ static void serial_interaction(void)
       checkForCard(true);
       break;
 
-    case 'r':
+    case 'O':
       card_ok_count = 3;
       break;
 
@@ -693,11 +701,13 @@ unsigned long lastFile = 0;
 unsigned long lsatConfig = 0;
 unsigned long lastTimer = 0;
 unsigned long lastMQTT = 0;
+unsigned long lastSquawk = 0;
 
 // intervals for checking the card
 const unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
 const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
 const unsigned long mqttInterval = 500;      // check for mqtt state
+const unsigned long squawkInterval = 5000;   // send state 'squawk' to the mqtt
 
 static bool timeTo(unsigned long *last, unsigned long interval, unsigned long curtime)
 {
@@ -803,6 +813,16 @@ static void processMqtt(void)
   }
 }
 
+static void publish_state(void)
+{
+  static char data[32];
+  if (!mqtt_known)
+    return;
+
+  snprintf(data, sizeof(data), "%ld", ESP.getFreeHeap());
+  mqtt.publish("haccess/freemem", data);
+}
+
 // main code loop
 void loop() {
   unsigned long curtime;
@@ -840,6 +860,10 @@ void loop() {
     gpio_set(GPIO_OUT_OPTO, card_ok_count > 0 ? 1 : 0);
     if (card_ok_count > 0)
       card_ok_count--;
+  }
+
+  if (timeTo(&lastSquawk, squawkInterval, curtime)) {
+    publish_state();
   }
 
   // always check gpios through the loop
