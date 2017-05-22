@@ -175,6 +175,11 @@ static void mqtt_trigger_notify(class trigger *trig, bool state)
     return;
   }
 
+  if (true) {
+    Serial.printf("trigger %p state %d\n", trig, state);
+    Serial.printf("trigger topic %s state %d\n", data->topic, state);
+  }
+    
   mqtt_publish(data->topic, state ? "1" : "0");
 }
 
@@ -231,7 +236,8 @@ static void read_trigger(const char *section)
 
       data->topic = strdup(tmp);
       if (!data->topic)
-	goto mem_err;
+	      goto mem_err;
+      Serial.printf("topic %s created\n", data->topic);
     }
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
