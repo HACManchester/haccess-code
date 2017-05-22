@@ -659,9 +659,9 @@ static void checkGPIOs(void)
     if (false)
       return;
    
-    in_button1->new_state((gpio & 1) != 0);
-    in_button2->new_state((gpio & 2) != 0);
-    in_opto->new_state((gpio & 4) != 0);
+    in_button1->new_state((gpio & 1) == 0);
+    in_button2->new_state((gpio & 2) == 0);
+    in_opto->new_state((gpio & 4) == 0);
 
     PCD8544_gotoXY(64 + 5, 0);
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
