@@ -414,10 +414,14 @@ static void setup_card_list(void)
     goto parse_err;
 
   if (cfg.en_cards_fetch) {
-    if (!cfgfile.getValue(section, "update", tmp, sizeof(tmp), cfg.en_cards_update));
+    if (!cfgfile.getValue(section, "update", tmp, sizeof(tmp), cfg.en_cards_update))
       goto parse_err;
 
-    if (!cfgfile.getValue(section, "watch", tmp, szieof(tmp), cfg.en_cards_watch));
+    if (!cfgfile.getValue(section, "watch", tmp, sizeof(tmp), cfg.en_cards_watch))
+      goto parse_err;
+
+    if (!cfgfile.getValue(section, "interval", tmp, sizeof(tmp), cfg.card_interval))
+      cfg.card_interval = 600;
 
     cfg.card_host = get_cfg_str(section, "host");
     cfg.card_url = get_cfg_str(section, "url");
@@ -425,13 +429,14 @@ static void setup_card_list(void)
     if (!cfg.card_host || !cfg.card_url)
       goto parse_err;
 
-    if (
-    watch_cfg = new UrlWatch(cfg.card_host, 80, cfg.card_url);
-    if (!watch_cfg) {
-      cfg.en_cards_fetch = false;
-      cfg.en_cards_update = false;
-      Serial.println("no memory for url watch");
-      goto parse_err;
+    if (cfg.en_cards_watch) {
+      watch_cfg = new UrlWatch(cfg.card_host, 80, cfg.card_url);
+      if (!watch_cfg) {
+        cfg.en_cards_fetch = false;
+        cfg.en_cards_update = false;
+        Serial.println("no memory for url watch");
+        goto parse_err;
+      }
     }
   }
 
