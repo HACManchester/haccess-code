@@ -72,6 +72,8 @@ extern "C" {
 WiFiClient mqttWiFi;
 PubSubClient mqtt(mqttWiFi);
 
+static bool force_card_reload;
+
 // for the moment we have some very simple scheduling informaton
 // using millisecond since 'x' to check
 unsigned long lastCard = 0;
@@ -690,10 +692,14 @@ static void serial_interaction(void)
       checkForCard(true);
       break;
 
+    case 'l':
+      force_card_reload = true;
+      break;
+
     case 'S':
       Serial.println("MAC " + WiFi.macAddress());
       Serial.println(WiFi.localIP());  
-      Serial.printf("Heap free %d bytes", ESP.getFreeHeap());
+      Serial.printf("Heap free %d bytes\n", ESP.getFreeHeap());
       break;
 
     case 'O':
@@ -871,7 +877,8 @@ void loop() {
     checkForCard(false);
   }
 
-  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update) {
+  if ((timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update) || force_card_reload) {
+    force_card_reload = false;
     if (cfg.en_cards_watch)  
       checkForNewFiles();
     else

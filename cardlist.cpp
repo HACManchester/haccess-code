@@ -12,7 +12,7 @@ static String last_modified;
 bool copyCardList(const char *host, unsigned port, const char *url, const char *auth)
 {
   WiFiClient client;
-   
+  const char *iphost;
   File f;
 
   if (!fs_opened) {
@@ -28,19 +28,27 @@ bool copyCardList(const char *host, unsigned port, const char *url, const char *
     return false;
   }
 
-  if (!client.connect(host, port)) {
+  iphost = "85.119.83.178";   // temporary overide.
+  if (true)
+    Serial.printf("Updating cards from %s:%d url %s\n", host, port, url);
+
+  if (!client.connect(iphost, port)) {
     Serial.print("could not connect to host ");
     Serial.println(host);
     return false;
   }
-
-  //Serial.println("Updating cards from " + host + " " + url);
   
+  if (true)
+    Serial.printf("issuing get request\n");
+
   client.print("GET ");
   client.print(url);
   client.printf(" HTTP/1.0\r\nHost: ");
   client.print(host);
   client.print("\r\n");
+  //client.print("Accept: */*\r\n");
+  //client.print("Accept-Encoding: identity\n");
+  client.print("User-Agent: Haccess Node 1.0\r\n");
   if (auth) {
     client.print("Authorization: Basic ");
     client.print(auth);
@@ -48,22 +56,30 @@ bool copyCardList(const char *host, unsigned port, const char *url, const char *
   }
   client.print("\r\n");
 
+  if (true)
+    Serial.println("Awaiting response");
+
   // read the header
   while (client.connected()) {
     String line = client.readStringUntil('\n');
-    Serial.print("CARD HEADER :" + line);
-    Serial.println(line.length());
+    Serial.printf("CARD HEADER : %s\n", line.c_str());
+    //Serial.println(line.length());
     if (line.length() < 2)
       break;
   }
 
+ if (true)
+    Serial.println("Reading data");
+
   while (client.connected()) {
     String line = client.readStringUntil('\n');
-    Serial.println("CARD: " + line);
+    Serial.printf("CARD: %s\n", line.c_str());
     f.println(line);
   }
 
   f.close();
+  if (true)
+    Serial.println("Read card data from server");
   
   if (1) {
     File r = SPIFFS.open("/cardlist", "r");
