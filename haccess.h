@@ -8,6 +8,7 @@ struct config {
   bool en_mqtt;     /**< Set to use MQTT */
 
   bool en_cards;
+  bool en_cards_watch;
   bool en_cards_fetch;
   bool en_cards_update;
 
