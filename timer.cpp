@@ -6,6 +6,8 @@
 #include <vector>
 #include "timer.h"
 
+#define debug true
+
 #ifdef ESP8266
 #include <Arduino.h>
 #endif
@@ -16,6 +18,9 @@ static std::vector<timer *> timers;
 
 void timer::set(unsigned long exptime)
 {
+  if (debug)
+    Serial.printf("setting timer %p to %lu\n", this, exptime);
+
   if (!this->running) {
     this->running = true;
     timers.push_back(this);
@@ -33,6 +38,7 @@ void timer::fire(void)
 
 static unsigned long last_time = ~0UL;
 
+
 void timer_sched(unsigned long curtime)
 {
   std::vector<timer *>::iterator it;
@@ -47,6 +53,9 @@ void timer_sched(unsigned long curtime)
     ptr = *it;
  
     if (ptr->expired(curtime)) {
+      if (debug) {
+        Serial.printf("timer %p expired\n", ptr);
+      }
       it = timers.erase(it);
       ptr->fire();
     } else {

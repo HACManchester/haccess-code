@@ -237,8 +237,9 @@ bool trigger::should_trigger(class trigger *trig, bool prev)
 bool timer_trigger::recalc(class trigger *trig, bool prev)
 {
   // return true if our dependency is set and we're level triggered
-  if (trig->get_state() && !this->trig_edge)
+  if (trig->get_state() && !this->trig_edge) {
     return true;
+  }
 
   if (should_trigger(trig, prev)) {
     __log("timer_trigger: dep - fire for %lu\n", this->len);
@@ -257,7 +258,7 @@ static void trig_expiry_fn(void *ptr)
 
 timer_trigger::timer_trigger(void) : trigger()
 {
-  timer.expiry(trig_expiry_fn, this);
+  this->timer.expiry(trig_expiry_fn, this);
 }
 
 forward_trigger::forward_trigger()
