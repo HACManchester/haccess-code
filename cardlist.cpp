@@ -9,7 +9,7 @@
 
 static String last_modified;
 
-bool copyCardList(const char *host, unsigned port, const char *url)
+bool copyCardList(const char *host, unsigned port, const char *url, const char *auth)
 {
   WiFiClient client;
    
@@ -40,7 +40,13 @@ bool copyCardList(const char *host, unsigned port, const char *url)
   client.print(url);
   client.printf(" HTTP/1.0\r\nHost: ");
   client.print(host);
-  client.print("\r\n\r\n");
+  client.print("\r\n");
+  if (auth) {
+    client.print("Authorization: Basic ");
+    client.print(auth);
+    client.print("\r\n");
+  }
+  client.print("\r\n");
 
   // read the header
   while (client.connected()) {

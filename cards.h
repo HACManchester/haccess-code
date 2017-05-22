@@ -12,7 +12,7 @@ class CardInfo {
 extern bool dbg_showCardRead;
 
 extern void readCardList(File f);
-extern bool copyCardList(const char *host, unsigned port, const char *url);
+extern bool copyCardList(const char *host, unsigned port, const char *url, const char *auth);
 
 extern bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength);
 

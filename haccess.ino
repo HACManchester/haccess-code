@@ -72,6 +72,21 @@ extern "C" {
 WiFiClient mqttWiFi;
 PubSubClient mqtt(mqttWiFi);
 
+// for the moment we have some very simple scheduling informaton
+// using millisecond since 'x' to check
+unsigned long lastCard = 0;
+unsigned long lastFile = 0;
+unsigned long lsatConfig = 0;
+unsigned long lastTimer = 0;
+unsigned long lastMQTT = 0;
+unsigned long lastSquawk = 0;
+
+// intervals for checking the card
+unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
+const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
+const unsigned long mqttInterval = 500;      // check for mqtt state
+const unsigned long squawkInterval = 5000;   // send state 'squawk' to the mqtt
+
 // configuration information
 
 bool wifi_up = false;
@@ -422,6 +437,7 @@ static void setup_card_list(void)
 
     if (!cfgfile.getValue(section, "interval", tmp, sizeof(tmp), cfg.card_interval))
       cfg.card_interval = 600;
+    fileInterval = cfg.card_interval * 1000;
 
     cfg.card_host = get_cfg_str(section, "host");
     cfg.card_url = get_cfg_str(section, "url");
@@ -521,9 +537,11 @@ void setup() {
     dump_cfg(en_rfid);
     dump_cfg(en_mqtt);
     dump_cfg(en_cards);
+    dump_cfg(en_cards_watch);
     dump_cfg(en_cards_fetch);
     dump_cfg(en_cards_update);
     dump_cfg(rfid_interval);
+    dump_cfg(card_interval);
   }
 }
 
@@ -532,10 +550,14 @@ static void checkForNewFiles(void)
 {
   if (watch_cfg->upToDate() == URL_CHANGED) {
     Serial.println("configuration changed\n");
-    copyCardList(watch_cfg->getHost(), watch_cfg->getPort(), watch_cfg->getUrl());
+    copyCardList(watch_cfg->getHost(), watch_cfg->getPort(), watch_cfg->getUrl(), NULL);
     Serial.println("configuration fetched\n");
     // todo - announce the new load?
   }
+}
+
+static void fetchNewFiles(void) {
+  copyCardList(cfg.card_host, 80, cfg.card_url, cfg.card_auth);
 }
 
 static void show_known_card(class CardInfo *info, uint8_t *uid, uint8_t uidLength)
@@ -708,22 +730,6 @@ static void serial_interaction(void)
   }
 }
 
-
-// for the moment we have some very simple scheduling informaton
-// using millisecond since 'x' to check
-unsigned long lastCard = 0;
-unsigned long lastFile = 0;
-unsigned long lsatConfig = 0;
-unsigned long lastTimer = 0;
-unsigned long lastMQTT = 0;
-unsigned long lastSquawk = 0;
-
-// intervals for checking the card
-const unsigned long fileInterval = 5000;     // check for new card file every 5seconds by default
-const unsigned long configInterval = 10000;  // check for new config file every 10seconds by default
-const unsigned long mqttInterval = 500;      // check for mqtt state
-const unsigned long squawkInterval = 5000;   // send state 'squawk' to the mqtt
-
 static bool timeTo(unsigned long *last, unsigned long interval, unsigned long curtime)
 {
   if ((curtime - *last) >= interval) {
@@ -865,9 +871,13 @@ void loop() {
     checkForCard(false);
   }
 
-  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update)
-    checkForNewFiles();
-
+  if (timeTo(&lastFile, fileInterval, curtime) && cfg.en_cards_update) {
+    if (cfg.en_cards_watch)  
+      checkForNewFiles();
+    else
+      fetchNewFiles();
+  }
+  
   if (timeTo(&lastTimer, 1000, curtime)) {
     runDisplay();
     processMqtt();
