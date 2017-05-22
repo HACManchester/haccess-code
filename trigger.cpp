@@ -15,6 +15,11 @@ extern "C" void __debug_printf(const char *msg, ...);
 //#define __log (NULL)
 #endif
 
+#if 1
+#undef __log(...)
+#define __log(msg...) Serial.printf(msg)
+#endif
+
 #include "mqtt.h"
 #include "trigger.h"
 
