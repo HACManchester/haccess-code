@@ -18,6 +18,7 @@ struct config {
 
   const char *card_host;
   const char *card_url;
+  const char *card_auth;
 
   const char *mqtt_server;
   uint16_t mqtt_port;

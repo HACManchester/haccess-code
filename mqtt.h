@@ -14,6 +14,7 @@ extern PubSubClient mqtt;
 
 static inline void mqtt_publish(const char *topic, const char *value)
 {
-  mqtt.publish(topic, value);
+  if (mqtt.connected())
+    mqtt.publish(topic, value);
 }
 #endif

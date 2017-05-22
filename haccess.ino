@@ -80,7 +80,7 @@ bool wifi_up = false;
 bool fs_opened = false;
 bool have_pn532 = true;
 
-bool dbg_showCardRead = true;
+bool dbg_showCardRead = false;
 
 unsigned button_count;
 unsigned detect_count;
@@ -417,11 +417,15 @@ static void setup_card_list(void)
     if (!cfgfile.getValue(section, "update", tmp, sizeof(tmp), cfg.en_cards_update));
       goto parse_err;
 
+    if (!cfgfile.getValue(section, "watch", tmp, szieof(tmp), cfg.en_cards_watch));
+
     cfg.card_host = get_cfg_str(section, "host");
     cfg.card_url = get_cfg_str(section, "url");
+    cfg.card_auth = get_cfg_str(section, "authinfo");
     if (!cfg.card_host || !cfg.card_url)
       goto parse_err;
 
+    if (
     watch_cfg = new UrlWatch(cfg.card_host, 80, cfg.card_url);
     if (!watch_cfg) {
       cfg.en_cards_fetch = false;
@@ -623,6 +627,7 @@ static void checkGPIOs(void)
       return;
 
     Serial.printf("gpio change %x to %x\n", old_gpio, gpio);
+    old_gpio = gpio;
 
     if (false)
       return;
@@ -635,7 +640,6 @@ static void checkGPIOs(void)
     PCD8544_lcdCharacter((gpio & 1) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 2) ? 'x' : '-');
     PCD8544_lcdCharacter((gpio & 4) ? 'x' : '-');
-    old_gpio = gpio;
 
     // test: mirror to port expander gpio_exp_setgpio(7, (gpio & 4) ? false : true);
 
@@ -657,6 +661,12 @@ static void serial_interaction(void)
 
     case 'R':
       checkForCard(true);
+      break;
+
+    case 'S':
+      Serial.println("MAC " + WiFi.macAddress());
+      Serial.println(WiFi.localIP());  
+      Serial.printf("Heap free %d bytes", ESP.getFreeHeap());
       break;
 
     case 'O':
@@ -784,6 +794,9 @@ static void sayHello(void)
   unsigned long curtime = millis();
   char uptime[32];
 
+  if (!mqtt.connected())
+    return;
+
   sprintf(uptime, "%ld", curtime / 1000);
   mqtt.publish("haccess/uptime", uptime);
 }
@@ -816,7 +829,7 @@ static void processMqtt(void)
 static void publish_state(void)
 {
   static char data[32];
-  if (!mqtt_known)
+  if (!mqtt_known || !mqtt.connected())
     return;
 
   snprintf(data, sizeof(data), "%ld", ESP.getFreeHeap());
@@ -862,7 +875,7 @@ void loop() {
       card_ok_count--;
   }
 
-  if (timeTo(&lastSquawk, squawkInterval, curtime)) {
+  if (timeTo(&lastSquawk, squawkInterval, curtime) && false) {
     publish_state();
   }
 

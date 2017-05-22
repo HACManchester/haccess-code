@@ -83,6 +83,7 @@ void readCardList(File f)
       Serial.print("readCard: line: ");
       Serial.println(l);
     }
+    ESP.wdtFeed();
   }
 }
 
@@ -115,7 +116,7 @@ bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
 
   while (f.available()) {
     l = f.readStringUntil('\n');
-    if (dbg_showCardRead && true) {
+    if (dbg_showCardRead) {
       Serial.print("checkCard: line: ");
       Serial.println(l);
     }
@@ -124,9 +125,10 @@ bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
     if (sep <= 2)
       continue;
 
+#if 0
     Serial.println("read uid is " + l.substring(0,sep));
-
     uidstr = l.substring(0, sep);
+    
     if (uidstr.equalsIgnoreCase(uid_full) || uidstr.equalsIgnoreCase(uid_short)) {
       int nick = l.indexOf(',', sep+1);
       int full = l.indexOf(',', nick+1);
@@ -139,8 +141,28 @@ bool lookupCard(class CardInfo *info, uint8_t *uid, int uidLength)
 
       return true;
     }
+#else
+    {
+       // format is logname, shortname, uid
+       int full = l.indexOf(',', sep+1);
+       int ends = l.length();
+
+       if (full == -1)
+         continue;
+  
+       uidstr = l.substring(full+2, ends-1);
+       Serial.println("read uid is " + uidstr); 
+       if (uidstr.equalsIgnoreCase(uid_full) || uidstr.equalsIgnoreCase(uid_short) || uidstr.startsWith(uid_full)) {
+
+        info->shortname = l.substring(sep+2, full+2);
+        info->logname = l.substring(1, sep-1);
+        return true;          
+      }
+    }
+#endif
+    
   }
 
-    return false;
+  return false;
 }
 
