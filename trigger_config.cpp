@@ -18,6 +18,10 @@
 //#define __log (NULL)
 #endif
 
+#if 1
+#undef __log
+#define __log(x...) Serial.printf(x)
+#endif
 
 // triggers
 
@@ -149,15 +153,23 @@ static void read_dependency_srcs(class trigger *target,
 static bool read_trigger_timer(class timer_trigger *tt, const char *section, char *buff, int buff_sz)
 {
   unsigned long time;
+  bool ok;
+  
+  if (!tt)
+    return false;
 
   tt->set_length(1000UL);   // default is 1sec
 
-  if (cfgfile.getValue(section, "time", buff, buff_sz)) {
+  ok = cfgfile.getValue(section, "time", buff, buff_sz);
+  if (!ok)
+    ok = cfgfile.getValue(section, "length", buff, buff_sz);
+  if (ok) {
     if (!parse_time(buff, &time)) {
-      __log("ERR: failed to parse time\n");
+      __log("ERR: failed to parse time %s\n", buff);
       return false;
     }
 
+    __log("time set to %lu\n", time);
     tt->set_length(time);
   }
 
@@ -242,13 +254,17 @@ static void read_trigger(const char *section)
   } else if (strcmp(tmp, "timer") == 0) {
     class timer_trigger *tt = new timer_trigger();
 
+    __log("DBG: new timer created for %s, tt=%p\n", section, tt);
     if (tt) {
-      if (!read_trigger_timer(tt, section, tmp, sizeof(tmp)))
+      if (!read_trigger_timer(tt, section, tmp, sizeof(tmp))) {
+        __log("ERR: trigger %s: cannot parse timer\n", section);
         goto parse_err;
+      }
     }
     trig = tt;
   } else {
     Serial.printf("section %s: failed type of '%s'\n", section, tmp);
+    trig = NULL;
     goto parse_err;
   }
 
@@ -305,8 +321,10 @@ static void read_trigger(const char *section)
 
       Serial.printf("%s: expiry %ld ms\n", section, exptime);
 
-      if (!tt || !ft)
+      if (!tt || !ft) {
+        Serial.printf("%s: failed to create tigger\n");
         goto parse_err;
+      }
 
       tt->set_name("internal/timer");
       ft->set_name("internal/forward");
